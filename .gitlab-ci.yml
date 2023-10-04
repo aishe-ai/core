@@ -14,5 +14,7 @@ build:
   script:
     - docker build -t $ARTIFACT_REGISTRY/core:$CI_COMMIT_SHA .
     - docker push $ARTIFACT_REGISTRY/core:$CI_COMMIT_SHA
-  # only:
-  #   - main
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      # changes:
+      #   - Dockerfile
