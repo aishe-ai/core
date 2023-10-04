@@ -9,7 +9,8 @@ pytesseract
 chromadb
 python-dotenv
 tiktoken
-pydantic
+# https://python.langchain.com/docs/guides/pydantic_compatibility
+pydantic==1.*
 slack-sdk
 openai
 python-multipart
