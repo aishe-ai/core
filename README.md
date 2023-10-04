@@ -23,3 +23,8 @@
 
 ## Testing
 tbd
+
+## Docker
+[Public image repo](europe-west10-docker.pkg.dev/aisheai/docker-images)
+
+`docker run -d -p 80:80 --env-file .env aishe-ai`
