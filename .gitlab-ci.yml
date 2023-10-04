@@ -1,0 +1,18 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay2
+  ARTIFACT_REGISTRY: europe-west10-docker.pkg.dev/aisheai/aishe-ai-images
+
+before_script:
+  - echo "$GCP_ARTIFACT_SERVICE_KEY" > gcloud-service-key.json
+  - docker login -u _json_key --password-stdin $ARTIFACT_REGISTRY < gcloud-service-key.json
+build:
+  script:
+    - docker build -t $ARTIFACT_REGISTRY/your-image-name:$CI_COMMIT_SHA .
+    - docker push $ARTIFACT_REGISTRY/your-image-name:$CI_COMMIT_SHA
+  # only:
+  #   - main
