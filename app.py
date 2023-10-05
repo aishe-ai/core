@@ -130,6 +130,7 @@ async def new_slack_event(
     request: Request, payload: dict, background_tasks: BackgroundTasks
 ):
     try:
+        print(payload["event"]["text"])
         # check if message is from user, bot message has a bot_id key
         if (
             payload["event"]["client_msg_id"]
