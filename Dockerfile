@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install SQLite3 from apt
-RUN apt-get update && apt-get install -y sqlite3 && apt-get clean
+RUN apt-get update && apt install sqlite3 libsqlite3-dev -y
 
 # 
 COPY ./requirements.txt /code/requirements.txt
