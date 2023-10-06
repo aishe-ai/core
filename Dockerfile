@@ -31,6 +31,9 @@ COPY ./requirements.txt /code/requirements.txt
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+# https://stackoverflow.com/questions/62523183/how-to-change-sqlite-version-used-by-python
+ENV LD_LIBRARY_PATH="/usr/local/lib"
+
 # Copy application code
 COPY . /code/app
 
