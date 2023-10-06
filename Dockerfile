@@ -1,34 +1,38 @@
-# 
+# Use Python 3.11.3 image
 FROM python:3.11.3
 
-# https://www.sqlite.org/2023/sqlite-tools-linux-x86-3430100.zip
-ARG SQLLITE3_NAME=sqlite-tools-linux-x86-3430100
-ARG SQLLITE3_ZIP=$SQLLITE3_NAME.zip
-# change year in link if needed!
-ARG SQLITE3_DOWNLOAD_LINK=https://www.sqlite.org/2023/$SQLLITE3_ZIP
+# SQLite3 variables
+ARG SQLITE3_NAME=sqlite-autoconf-3430100
+ARG SQLITE3_TAR=$SQLITE3_NAME.tar.gz
+ARG SQLITE3_DOWNLOAD_LINK=https://www.sqlite.org/2023/$SQLITE3_TAR
 
-# 
+# Set working directory
 WORKDIR /code/app
 
-# Set environment variables for production
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install wget and download SQLite3 precompiled binaries
+# Install required packages and download, compile, and install SQLite3
 RUN apt-get update && \
+    apt-get install -y wget build-essential && \
     wget $SQLITE3_DOWNLOAD_LINK && \
-    unzip $SQLLITE3_ZIP && \
-    cp $SQLLITE3_NAME/sqlite3 /usr/local/bin/ && \
-    rm -rf $SQLLITE3_NAME* 
+    tar xvf $SQLITE3_TAR && \
+    cd $SQLITE3_NAME && \
+    ./configure && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf $SQLITE3_NAME*
 
-# 
+# Copy requirements file
 COPY ./requirements.txt /code/requirements.txt
 
-# 
+# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# 
+# Copy application code
 COPY . /code/app
 
-# 
+# Run application
 CMD uvicorn app:app --proxy-headers --host 0.0.0.0 --port 80 --workers $(nproc)
