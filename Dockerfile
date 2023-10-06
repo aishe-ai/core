@@ -25,12 +25,19 @@ RUN apt-get update && \
     cd .. && \
     rm -rf $SQLITE3_NAME*
 
+# Install tesseract-ocr, poppler-utils, and playwright in a separate layer
+RUN apt-get update && \
+    apt-get install -y tesseract-ocr poppler-utils && \
+    pip install playwright && \
+    playwright install
+
 # Copy requirements file
 COPY ./requirements.txt /code/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+# SQLite version change
 # https://stackoverflow.com/questions/62523183/how-to-change-sqlite-version-used-by-python
 ENV LD_LIBRARY_PATH="/usr/local/lib"
 
