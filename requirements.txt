@@ -25,3 +25,4 @@ GitPython
 fake_useragent
 black
 numexpr
+pysqlite3-binary
