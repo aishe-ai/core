@@ -6,6 +6,8 @@ from langchain.agents import (
 )
 from langchain.memory import ConversationBufferMemory
 from langchain.chat_models import ChatOpenAI
+from langchain.schema import SystemMessage
+
 
 from llm.tools.confluence.confluence_tool import confluence_tool
 from llm.tools.webpage.webpage_tool import webpage_tool
@@ -27,12 +29,22 @@ def new_conversional_agent(chat_model=DEFAULT_CHAT_MODEL, memory=EMPTY_MEMORY):
         llm=chat_model,
     ) + [confluence_tool, webpage_tool, git_tool]
 
+    system_message = f"""
+        You are a chat bot which helps the user find answers to his question with internal company data.
+        Answer in the language of the user messages, default to german.
+        Use all past messages within your memory for context
+    """
+    system_message = SystemMessage(content=system_message)
+
+    memory.chat_memory.add_message(system_message)
+
     conversional_agent = initialize_agent(
         tools,
         chat_model,
         agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         memory=memory,
+        max_iterations=3,
     )
 
     return conversional_agent

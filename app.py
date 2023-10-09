@@ -31,7 +31,7 @@ from langchain.chains import ConversationalRetrievalChain, RetrievalQA
 
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
-from langchain.schema import SystemMessage
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
 
 from langchain.document_loaders import (
     Docx2txtLoader,
@@ -129,7 +129,6 @@ async def new_slack_event(
     request: Request, payload: dict, background_tasks: BackgroundTasks
 ):
     try:
-        print(payload["event"]["text"])
         if "has joined the channel" in payload["event"]["text"]:
             examples = await get_example_prompts()
             user_id = payload["event"]["user"]
@@ -386,7 +385,25 @@ def prompt_handler(prompt_parameters: PromptParameters):
             )
     logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
     conversional_agent = new_conversional_agent(memory=memory)
-    response = conversional_agent.run(input=prompt_parameters.prompt)
+    
+    chat_history = ""
+    for message in memory.chat_memory.messages:
+        if isinstance(message, HumanMessage):
+            chat_history += f"user: {message.content}\n"
+        elif isinstance(message, AIMessage):
+            chat_history += f"ai: {message.content}\n"
+        elif isinstance(message, SystemMessage):
+            chat_history += f"system: {message.content}\n"
+    
+    prompt = f"""
+    {chat_history}
+    Human: {prompt_parameters.prompt}
+    Assistant:
+    """
+
+    print(prompt)
+
+    response = conversional_agent.run(input=prompt)
     slack_response_handler(prompt_parameters, response)
 
 
