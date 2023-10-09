@@ -2,6 +2,8 @@ import os
 import urllib.parse
 import json
 import logging
+import re
+
 
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
 
@@ -119,9 +121,6 @@ async def slack_rating(payload: str = Form(...)):
     return payload
 
 
-import requests
-
-
 # must return given payload for slack challenge:
 # slack retry behaviour
 # https://api.slack.com/apis/connections/events-api#retries
@@ -131,6 +130,30 @@ async def new_slack_event(
 ):
     try:
         print(payload["event"]["text"])
+        if "has joined the channel" in payload["event"]["text"]:
+            examples = await get_example_prompts()
+            user_id = payload["event"]["user"]
+            try:
+                SLACK_CLIENT.chat_postEphemeral(
+                    user=user_id,
+                    channel=payload["event"]["channel"],
+                    text=f"Welcome to the channel, <@{user_id}>!",
+                    blocks=[
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": f"Welcome to the channel, <@{user_id}>!",
+                            },
+                        },
+                        {"type": "divider"},
+                    ]
+                    + examples["blocks"],
+                )
+            except Exception as e:
+                print(f"Error: {e}")
+                return None
+
         # check if message is from user, bot message has a bot_id key
         if (
             payload["event"]["client_msg_id"]
