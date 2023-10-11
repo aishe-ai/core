@@ -2,43 +2,13 @@ import os
 import urllib.parse
 import json
 import logging
-import re
 
-
-logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
-
-# get root logger
-logger = logging.getLogger(__name__)
-
-
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Form
+from fastapi import FastAPI, BackgroundTasks, Request, Form
 from fastapi.responses import JSONResponse
-
 
 from dotenv import load_dotenv
 
-from langchain.document_loaders import ConfluenceLoader
-from langchain.text_splitter import (
-    CharacterTextSplitter,
-    RecursiveCharacterTextSplitter,
-    CharacterTextSplitter,
-)
-from langchain.memory import ConversationBufferMemory
-
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
-
-from langchain.document_loaders import (
-    Docx2txtLoader,
-    PyPDFLoader,
-    UnstructuredFileLoader,
-)
-
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -48,6 +18,14 @@ from llm.agents import new_conversional_agent
 from data_models.models import *
 from llm.memory.slack_memory import slack_to_llm_memory
 from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK
+
+import requests
+
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+
+# get root logger
+logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
@@ -197,61 +175,6 @@ async def new_slack_event(
     return JSONResponse(content=payload)
 
 
-def vectorstore_handler(prompt_parameters, documents):
-    vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings())
-
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        input_key="question",
-        output_key="answer",
-        return_messages=True,
-    )
-
-    system_message = f"""
-        You are an assistant which helps to user find answers to his question with internal company data.
-        This data will be provided by a vector db as context.
-        You also help with normal stuff like answering questions or generating text by ignoring this system message
-    """
-    system_message = SystemMessage(content=system_message)
-
-    memory.chat_memory.add_message(system_message)
-
-    try:
-        # Fetch the last 100 messages (maximum limit)
-        response = SLACK_CLIENT.conversations_history(
-            channel=prompt_parameters.source.id, limit=1
-        )
-
-        messages = response["messages"]
-
-        non_command_messages = [
-            message
-            for message in messages
-            # "bot_id" not in message and
-            if message["text"] not in ["/intragpt-health-check", LOADING_INDICATOR]
-        ]
-
-        for message in reversed(non_command_messages):
-            if "bot_id" in message:
-                # This is a bot message
-                memory.chat_memory.add_ai_message(message["text"])
-            else:
-                # This is a user message
-                memory.chat_memory.add_user_message(message["text"])
-    except SlackApiError as e:
-        print(f"Error: {e.response['error']}")
-
-    # https://github.com/hwchase17/chat-your-data
-    llm = ChatOpenAI(model_name="gpt-4", temperature=1)
-    conversation_qa_chain = ConversationalRetrievalChain.from_llm(
-        llm,
-        retriever=vectorstore.as_retriever(),
-        memory=memory,
-        return_source_documents=True,
-    )
-    return conversation_qa_chain({"question": prompt_parameters.prompt})
-
-
 def download_handler(prompt_parameters, file_url, file_name, file_extension):
     resp = requests.get(
         file_url,
@@ -270,105 +193,44 @@ def download_handler(prompt_parameters, file_url, file_name, file_extension):
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        match file_extension:
-            case ".docx":
-                loader = Docx2txtLoader(file_path)
-            case ".pdf":
-                loader = PyPDFLoader(file_path)
+        memory = None
+        match prompt_parameters.source.name:
+            case "slack":
+                memory = slack_to_llm_memory(
+                    slack_client=SLACK_CLIENT, prompt_parameters=prompt_parameters
+                )
             case other:
-                print(f"Using general purpose loader for {other}")
-                loader = UnstructuredFileLoader(file_path)
+                logger.error(
+                    "Not matching event source found for memory conversion",
+                    prompt_parameters.source.name,
+                )
+        logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
+        conversional_agent = new_conversional_agent(memory=memory)
 
-        text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=2000, chunk_overlap=1000
-        )
-        documents = loader.load_and_split(text_splitter)
-        conversation_result = vectorstore_handler(prompt_parameters, documents)
+        chat_history = ""
+        for message in memory.chat_memory.messages:
+            if isinstance(message, HumanMessage):
+                chat_history += f"user: {message.content}\n"
+            elif isinstance(message, AIMessage):
+                chat_history += f"ai: {message.content}\n"
+            elif isinstance(message, SystemMessage):
+                chat_history += f"system: {message.content}\n"
 
-        # print(conversation_result)
+        file_translation_params = {
+            "slack_channel_id": prompt_parameters.source.id,
+            "file_path": file_path,
+        }
 
-        link_blocks = [
-            {"type": "divider"},
-        ]
-        link_blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": conversation_result["chat_history"][-1].content,
-                    "emoji": True,
-                },
-            }
-        )
-        link_blocks.append({"type": "divider"})
-        link_blocks.append(
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "Rate my answer"},
-                "accessory": {
-                    "type": "radio_buttons",
-                    "options": [
-                        {
-                            "text": {"type": "plain_text", "text": "Good"},
-                            "value": "value-0",
-                        },
-                        {
-                            "text": {"type": "plain_text", "text": "Ok"},
-                            "value": "value-1",
-                        },
-                        {
-                            "text": {"type": "plain_text", "text": "Bad"},
-                            "value": "value-2",
-                        },
-                    ],
-                    "action_id": "radio_buttons-action",
-                },
-            }
-        )
-        link_blocks.append(
-            {
-                "type": "input",
-                "element": {
-                    "type": "plain_text_input",
-                    "action_id": "plain_text_input-action",
-                },
-                "label": {
-                    "type": "plain_text",
-                    "text": "You can tell me more about your rating, if you want.",
-                    "emoji": True,
-                },
-            },
-        )
-        try:
-            SLACK_CLIENT.chat_postMessage(
-                channel=prompt_parameters.source.id,
-                # text=f"{simple_result['result']} || {conversation_result['chat_history'][-1].content}",
-                text=conversation_result["chat_history"][-1].content,
-                blocks=link_blocks,
-            )
-        except SlackApiError as e:
-            # You will get a SlackApiError if "ok" is False
-            assert e.response["ok"] is False
-            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-            print(f"Got an error: {e.response['error']}")
-        # Clean up temporary file
-        os.remove(file_path)
-    else:
-        SLACK_CLIENT.chat_postMessage(
-            channel=prompt_parameters.source.id,
-            blocks=[
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Couldn´t download file"},
-                    # "accessory": {
-                    #     "type": "image",
-                    #     "image_url": "https://media.tenor.com/UnFx-k_lSckAAAAM/amalie-steiness.gif",
-                    #     "alt_text": "loading spinner",
-                    # },
-                }
-            ],
-            text="Couldn´t download file",
-        )
+        prompt = f"""
+        {chat_history}
+        System: Parameters for file translation: {file_translation_params}, Ignore any previous errors/warnings
+        Human: {prompt_parameters.prompt}
+        Assistant:
+        """
+
+        print(prompt)
+
+        response = conversional_agent.run(input=prompt)
 
 
 def prompt_handler(prompt_parameters: PromptParameters):
@@ -385,7 +247,7 @@ def prompt_handler(prompt_parameters: PromptParameters):
             )
     logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
     conversional_agent = new_conversional_agent(memory=memory)
-    
+
     chat_history = ""
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
@@ -394,7 +256,7 @@ def prompt_handler(prompt_parameters: PromptParameters):
             chat_history += f"ai: {message.content}\n"
         elif isinstance(message, SystemMessage):
             chat_history += f"system: {message.content}\n"
-    
+
     prompt = f"""
     {chat_history}
     Human: {prompt_parameters.prompt}

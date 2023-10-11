@@ -13,6 +13,7 @@ from llm.tools.confluence.confluence_tool import confluence_tool
 from llm.tools.webpage.webpage_tool import webpage_tool
 from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.deepl.file_translation_tool import file_translation_tool
+from llm.tools.document.document_vector_store_tool import document_vector_store_tool
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 DEFAULT_CHAT_MODEL = ChatOpenAI(model_name="gpt-4", temperature=0.4)
@@ -28,7 +29,13 @@ def new_conversional_agent(chat_model=DEFAULT_CHAT_MODEL, memory=EMPTY_MEMORY):
             "llm-math",
         ],
         llm=chat_model,
-    ) + [confluence_tool, webpage_tool, git_tool, file_translation_tool]
+    ) + [
+        confluence_tool,
+        webpage_tool,
+        git_tool,
+        file_translation_tool,
+        document_vector_store_tool,
+    ]
 
     system_message = f"""
         You are a chat bot which helps the user find answers to his question with internal company data.

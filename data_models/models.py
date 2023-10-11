@@ -48,7 +48,24 @@ class GitToolParams(BaseModel):
         description="Repo Branch, must be extracted from prompt, if not given/possible use 'main'"
     )
 
+
 class DeeplDocumentTranslationTool(BaseModel):
-    file_path: FilePath = Field(description="Filepath of original file, provided by systemmessage") 
-    target_language_abbrevation: str = Field(description="Target language provided by user converted to a deepl valid language abbrevation by model(you). Must also be in uppercase")
-    slack_channel_id: str = Field(description="Source slack channel, provided by default value")
+    file_path: FilePath = Field(
+        description="Filepath of original file, provided by systemmessage"
+    )
+    target_language_abbrevation: str = Field(
+        description="Target language provided by user converted to a deepl valid language abbrevation by model(you). Must also be in uppercase"
+    )
+    slack_channel_id: str = Field(
+        description="Source slack channel, provided by default value"
+    )
+
+
+class VectorStoreDocumentTool(BaseModel):
+    file_path: FilePath = Field(
+        description="Filepath of original file, provided by systemmessage"
+    )
+    slack_channel_id: str = Field(
+        description="Source slack channel, provided by default value"
+    )
+    prompt: str = Field(description="Prompt from user")
