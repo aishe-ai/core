@@ -17,7 +17,7 @@ from slack_sdk.errors import SlackApiError
 from llm.agents import new_conversional_agent
 from data_models.models import *
 from llm.memory.slack_memory import slack_to_llm_memory
-from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK
+from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK, EXAMPLE_PROMPTS
 
 import requests
 
@@ -59,18 +59,8 @@ async def get_example_prompts():
         }
     ]
 
-    # Sample list of texts to be added in "blocks"
-    sample_texts = [
-        "- Normal prompts like in chatgpt:\n\t\t\t- Who is Sam Hyde?",
-        "- Google:\n\t\t\t- Wie hoch ist die Regenwahrscheinlichkeit heute in Hannover?\n\t\t\t- Who is Leo DiCaprio's girlfriend? What is her current age raised to the 0.43 power?",
-        "- Website:\n\t\t\t- Wo kann ich auf dieser Website meine Fragen einreichen? https://verwaltung.bund.de/portal/DE/ueber\n\t\t\t- Wann endet die Frist für die erste Phase? https://verwaltung.bund.de/leistungsverzeichnis/de/leistung/99148138017000",
-        "- Documents:\n\t\t\t- Summarize this document (with attached file)\n\n"
-        "- Confluence:\n\t\t\t- Summarize the page: https://...... \n\n"
-        "- Git repos:\n\t\t\t- In which language is this project written: https://github.com/martinmimigames/little-music-player?\n\t\t\t- What does HWListener in this project https://github.com/martinmimigames/little-music-player do?\n\t\t\t- What is the difference of the m3u branch in this project: https://github.com/martinmimigames/little-music-player?",
-    ]
-
     # Use a for loop to fill in the text
-    for text in sample_texts:
+    for text in EXAMPLE_PROMPTS:
         block = {
             "type": "section",
             "text": {"type": "plain_text", "text": text, "emoji": True},
@@ -108,29 +98,7 @@ async def new_slack_event(
 ):
     try:
         if "has joined the channel" in payload["event"]["text"]:
-            examples = await get_example_prompts()
-            user_id = payload["event"]["user"]
-            try:
-                SLACK_CLIENT.chat_postEphemeral(
-                    user=user_id,
-                    channel=payload["event"]["channel"],
-                    text=f"Welcome to the channel, <@{user_id}>!",
-                    blocks=[
-                        {
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": f"Welcome to the channel, <@{user_id}>!",
-                            },
-                        },
-                        {"type": "divider"},
-                    ]
-                    + examples["blocks"],
-                )
-            except Exception as e:
-                print(f"Error: {e}")
-                return None
-
+            await new_user_handler(payload)
         # check if message is from user, bot message has a bot_id key
         if (
             payload["event"]["client_msg_id"]
@@ -153,7 +121,6 @@ async def new_slack_event(
                 for file_info in payload["event"]["files"]:
                     file_url = file_info["url_private_download"]
                     file_name = file_info["name"]
-                    file_extension = os.path.splitext(file_name)[1]
                     logger.info(
                         f"Handling file: {prompt_parameters.prompt} | {file_name}"
                     )
@@ -162,7 +129,6 @@ async def new_slack_event(
                         prompt_parameters,
                         file_url,
                         file_name,
-                        file_extension,
                     )
             else:
                 # dont use endpoint function because they will not run in the background
@@ -175,7 +141,31 @@ async def new_slack_event(
     return JSONResponse(content=payload)
 
 
-def download_handler(prompt_parameters, file_url, file_name, file_extension):
+async def new_user_handler(payload):
+    examples = await get_example_prompts()
+    user_id = payload["event"]["user"]
+    try:
+        SLACK_CLIENT.chat_postEphemeral(
+            user=user_id,
+            channel=payload["event"]["channel"],
+            text=f"Welcome to the channel, <@{user_id}>!",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Welcome to the channel, <@{user_id}>!",
+                    },
+                },
+                {"type": "divider"},
+            ]
+            + examples["blocks"],
+        )
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def download_handler(prompt_parameters, file_url, file_name):
     resp = requests.get(
         file_url,
         headers={"Authorization": "Bearer %s" % SLACK_BOT_OAUTH_TOKEN},
@@ -183,7 +173,6 @@ def download_handler(prompt_parameters, file_url, file_name, file_extension):
         stream=True,
     )
     if resp.status_code == 200:
-        documents = []
         file_path = f"downloads/{file_name}"
 
         if not os.path.exists("downloads"):
@@ -193,47 +182,42 @@ def download_handler(prompt_parameters, file_url, file_name, file_extension):
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        memory = None
-        match prompt_parameters.source.name:
-            case "slack":
-                memory = slack_to_llm_memory(
-                    slack_client=SLACK_CLIENT, prompt_parameters=prompt_parameters
-                )
-            case other:
-                logger.error(
-                    "Not matching event source found for memory conversion",
-                    prompt_parameters.source.name,
-                )
-        logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
-        conversional_agent = new_conversional_agent(memory=memory)
-
-        chat_history = ""
-        for message in memory.chat_memory.messages:
-            if isinstance(message, HumanMessage):
-                chat_history += f"user: {message.content}\n"
-            elif isinstance(message, AIMessage):
-                chat_history += f"ai: {message.content}\n"
-            elif isinstance(message, SystemMessage):
-                chat_history += f"system: {message.content}\n"
-
         file_translation_params = {
             "slack_channel_id": prompt_parameters.source.id,
             "file_path": file_path,
         }
 
+        memory_params = history_handler(prompt_parameters)
+        conversional_agent = new_conversional_agent(memory=memory_params[1])
+
         prompt = f"""
-        {chat_history}
-        System: Parameters for file translation: {file_translation_params}, Ignore any previous errors/warnings
+        {memory_params[0]}
+        System: Parameters for file tools: {file_translation_params}, Ignore any previous errors/warnings
         Human: {prompt_parameters.prompt}
         Assistant:
         """
 
-        print(prompt)
-
         response = conversional_agent.run(input=prompt)
 
 
+def start_agent():
+    return "hello"
+
+
 def prompt_handler(prompt_parameters: PromptParameters):
+    memory_params = history_handler(prompt_parameters)
+    conversional_agent = new_conversional_agent(memory=memory_params[1])
+
+    prompt = f"""
+    {memory_params[0]}
+    Human: {prompt_parameters.prompt}
+    Assistant:
+    """
+    response = conversional_agent.run(input=prompt)
+    slack_response_handler(prompt_parameters, response)
+
+
+def history_handler(prompt_parameters):
     memory = None
     match prompt_parameters.source.name:
         case "slack":
@@ -246,7 +230,6 @@ def prompt_handler(prompt_parameters: PromptParameters):
                 prompt_parameters.source.name,
             )
     logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
-    conversional_agent = new_conversional_agent(memory=memory)
 
     chat_history = ""
     for message in memory.chat_memory.messages:
@@ -256,33 +239,30 @@ def prompt_handler(prompt_parameters: PromptParameters):
             chat_history += f"ai: {message.content}\n"
         elif isinstance(message, SystemMessage):
             chat_history += f"system: {message.content}\n"
-
-    prompt = f"""
-    {chat_history}
-    Human: {prompt_parameters.prompt}
-    Assistant:
-    """
-
-    print(prompt)
-
-    response = conversional_agent.run(input=prompt)
-    slack_response_handler(prompt_parameters, response)
+    # due to TypeError: unhashable type: 'ConversationBufferMemory' no dict can be returned
+    return [chat_history, memory]
 
 
 def slack_response_handler(prompt_parameters: PromptParameters, response):
     try:
         response = json.loads(response)
-        try:
-            SLACK_CLIENT.chat_postMessage(
-                channel=prompt_parameters.source.id,
-                text="response",
-                blocks=response["slack_response"],
-            )
-        except SlackApiError as e:
-            # You will get a SlackApiError if "ok" is False
-            assert e.response["ok"] is False
-            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-            print(f"Got an error: {e.response['error']}")
+        print(response)
+        if "action_input" in response:
+            string_handler(prompt_parameters, response["action_input"])
+        else:
+            try:
+                SLACK_CLIENT.chat_postMessage(
+                    channel=prompt_parameters.source.id,
+                    text="response",
+                    blocks=response["slack_response"],
+                )
+            except SlackApiError as e:
+                # You will get a SlackApiError if "ok" is False
+                assert e.response["ok"] is False
+                assert e.response[
+                    "error"
+                ]  # str like 'invalid_auth', 'channel_not_found'
+                print(f"Got an error: {e.response['error']}")
     except:
         string_handler(prompt_parameters, response)
 
@@ -343,5 +323,3 @@ def string_handler(prompt_parameters: PromptParameters, response):
         assert e.response["ok"] is False
         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
         print(f"Got an error: {e.response['error']}")
-
-    print(response)
