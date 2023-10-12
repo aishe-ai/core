@@ -154,7 +154,7 @@ async def new_user_handler(payload):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"Welcome to the channel, <@{user_id}>!",
+                        "text": f"Welcome to the channel, <@{user_id}>! Use @ and a prompt, the last 10 messages will be also available to the model",
                     },
                 },
                 {"type": "divider"},
