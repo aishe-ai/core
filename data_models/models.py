@@ -69,3 +69,10 @@ class VectorStoreDocumentTool(BaseModel):
         description="Source slack channel, provided by default value"
     )
     prompt: str = Field(description="Prompt from user")
+
+
+class ImageCreationTool(BaseModel):
+    slack_channel_id: str = Field(
+        description="Source slack channel, provided by default value"
+    )
+    prompt: str = Field(description="Prompt from user")
