@@ -31,7 +31,8 @@ def file_translation_tool(
     """
     if not os.path.exists(file_path):
         send_error_notification(f"No file found at {file_path}", slack_channel_id)
-        raise FileNotFoundError(f"No file found at {file_path}")
+        return "file not found"
+        # raise FileNotFoundError(f"No file found at {file_path}")
 
     try:
         # Upload the file for translation
