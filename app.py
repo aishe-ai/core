@@ -264,7 +264,10 @@ def slack_response_handler(prompt_parameters: PromptParameters, response):
                 ]  # str like 'invalid_auth', 'channel_not_found'
                 print(f"Got an error: {e.response['error']}")
     except:
-        string_handler(prompt_parameters, response)
+        if isinstance(response, str):
+            string_handler(prompt_parameters, response)
+        else:
+            print(f"Weird answer from agent: {response}")
 
 
 def string_handler(prompt_parameters: PromptParameters, response):
