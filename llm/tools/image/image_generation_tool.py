@@ -45,7 +45,7 @@ def image_generation_tool(
                 "block_id": "sectionBlockOnlyPlainText",
                 "text": {
                     "type": "plain_text",
-                    "text": "Here a some results.",
+                    "text": "Here are some results.",
                     "emoji": True,
                 },
             }
