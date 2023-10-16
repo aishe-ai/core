@@ -41,7 +41,7 @@ def new_conversional_agent(chat_model=DEFAULT_CHAT_MODEL, memory=EMPTY_MEMORY):
     ]
 
     system_message = f"""
-        You are a chat bot which helps the user find answers to his question with internal company data.
+        You are a chat bot which helps the user find answers to his question.
         Answer in the language of the user messages, default to german.
         Use all past messages within your memory for context
     """
@@ -55,7 +55,7 @@ def new_conversional_agent(chat_model=DEFAULT_CHAT_MODEL, memory=EMPTY_MEMORY):
         agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         memory=memory,
-        max_iterations=3,
+        # max_iterations=3,
     )
 
     return conversional_agent
