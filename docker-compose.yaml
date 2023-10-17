@@ -6,12 +6,13 @@ services:
       context: https://github.com/pgvector/pgvector.git#master
       dockerfile: Dockerfile
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: aisheAI
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d  # Mount the local sql directory to the initialization directory
     networks:
       - app_network  # Assign the network to the postgres service
 
