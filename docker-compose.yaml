@@ -1,0 +1,60 @@
+version: '3.1'
+
+services:
+  postgres:
+    build:
+      context: https://github.com/pgvector/pgvector.git#master
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network  # Assign the network to the postgres service
+
+  core:
+    image: europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest
+    command: uvicorn app:app --reload --host 0.0.0.0 --port 80
+    working_dir: /app  # Set the working directory to /app
+    env_file:
+      - .env  # Specify the path to your environment file here
+    ports:
+      - "8000:80"
+      # - "80:80"
+    networks:
+      - app_network
+    volumes:
+      - .:/app  # Mount the current directory into the container
+  
+  ngrok:
+    image: ngrok/ngrok:latest
+    env_file:
+      - .env  # Specify the path to your environment file here
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "version: 2" > /tmp/ngrok.yml  &&
+        echo "console_ui: true" >> /tmp/ngrok.yml  &&
+        echo "tunnels:" >> /tmp/ngrok.yml &&
+        echo "  http:" >> /tmp/ngrok.yml &&
+        echo "    proto: http" >> /tmp/ngrok.yml &&
+        echo "    addr: core:80" >> /tmp/ngrok.yml &&
+        echo "    domain: $$NGROK_HOSTNAME" >> /tmp/ngrok.yml &&
+        ngrok start --all --config /tmp/ngrok.yml
+    ports:
+      - "4040:4040"  # Expose the web inspector on the host machine at localhost:4040
+    depends_on:
+      - core
+    networks:
+      - app_network
+
+networks:
+  app_network:  # Define a network
+    driver: bridge
+
+volumes:
+  postgres_data:
