@@ -26,3 +26,5 @@ fake_useragent
 black
 numexpr
 pysqlite3-binary
+pgvector
+psycopg2-binary

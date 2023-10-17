@@ -5,9 +5,8 @@ services:
     build:
       context: https://github.com/pgvector/pgvector.git#master
       dockerfile: Dockerfile
-    environment:
-      POSTGRES_USER: aisheAI
-      POSTGRES_PASSWORD: password
+    env_file:
+      - .env  # Specify the path to your environment file here
     ports:
       - "5432:5432"
     volumes:
