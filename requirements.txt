@@ -28,3 +28,4 @@ numexpr
 pysqlite3-binary
 pgvector
 psycopg2-binary
+psycopg2

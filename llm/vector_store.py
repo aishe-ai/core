@@ -17,8 +17,17 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
     password=os.environ.get("POSTGRES_PASSWORD", "password"),
 )
 
-print(CONNECTION_STRING)
+
+def new_chroma_vector_store(documents):
+    return Chroma.from_documents(documents, OpenAIEmbeddings())
 
 
 def new_vector_store(documents):
-    return Chroma.from_documents(documents, OpenAIEmbeddings())
+    # aka table name
+    collection_name = "vectorTests"
+    return PGVector.from_documents(
+        documents,
+        OpenAIEmbeddings(),
+        connection_string=CONNECTION_STRING,
+        collection_name=collection_name,
+    )

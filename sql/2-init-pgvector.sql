@@ -4,5 +4,5 @@
 -- Enable the vector extension
 CREATE EXTENSION vector;
 
--- Create the items table with a vector column
-CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));
+-- -- Create the items table with a vector column
+-- CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));
