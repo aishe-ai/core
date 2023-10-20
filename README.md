@@ -39,6 +39,12 @@ tbd
 
 ## Data structures
 ### Planned
+For prompts regarding internal company data, which will the regulary be scraped.
+When user prompts system, following will happen:
+1. get member from given email (search)
+2. get memberships from member (join)
+3. get documents from memberships (join)
+4. iterate over accessable documents and add their embeddings into the vector space for similarity search with given user prompt
 ```mermaid
 erDiagram
     organizations ||--|{ data_sources : belongs_to
