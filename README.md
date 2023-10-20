@@ -36,3 +36,70 @@ tbd
 ## Docker
 [Public image repo](europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest)
 `docker run -d -p 80:80 --env-file .env aishe-ai`
+
+## Data structures
+### Planned
+```mermaid
+erDiagram
+    organizations ||--|{ data_sources : belongs_to
+    organizations ||--|{ members : belongs_to
+    data_sources ||--|{ documents : belongs_to
+    members ||--|| memberships : belongs_to
+    data_sources ||--|| memberships : belongs_to
+    documents ||--|| memberships : belongs_to
+    organizations {
+        uuid uuid PK
+        name string
+        description string
+    }
+    data_sources {
+        uuid uuid PK
+        name text
+        description text
+        bot_auth_data jsonb
+        organization_uuid uuid FK
+    }
+    members {
+        uuid uuid PK
+        email text
+        name text
+        organization_uuid uuid FK
+    }
+    documents {
+        uuid uuid PK
+        data_source_uuid uuid FK
+        name text
+        description text
+        url text
+        metadata jsonb
+        embeddings vector[]
+        content text
+    }
+    memberships {
+        uuid uuid PK
+        data_source_role text
+        data_source_uuid uuid FK
+        namespace_user_name text
+        member_uuid uuid FK
+        document_uuid uuid FK
+    }
+```
+
+### langchain pqvector
+```mermaid
+erDiagram
+    langchain_pg_collection ||--o{ langchain_pg_embedding : belongs_to
+    langchain_pg_collection {
+        uuid uuid PK
+        name varchar()
+        cmetadata json
+    }
+    langchain_pg_embedding {
+        uuid uuid PK
+        embedding vector
+        document varchar()
+        cmetadata json
+        custom_id varchar()
+        collection_id uuid FK
+    }
+```
