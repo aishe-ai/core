@@ -91,7 +91,7 @@ erDiagram
     }
 ```
 
-### langchain pqvector
+### langchain pgvector
 ```mermaid
 erDiagram
     langchain_pg_collection ||--o{ langchain_pg_embedding : belongs_to
