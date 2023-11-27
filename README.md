@@ -41,18 +41,23 @@ tbd
 ### Planned
 For prompts regarding internal company data, which will the regulary be scraped.
 When user prompts system, following will happen:
-1. get member from given email (search)
-2. get memberships from member (join)
-3. get documents from memberships (join)
-4. iterate over accessable documents and add their embeddings into the vector space for similarity search with given user prompt
+1. Get member from given email (search)
+2. Get memberships from member (join)
+3. Get all accessible document metadata (document_table_name, document_uuid)
+4. Get all documents from different document_table(data_sources) in parallel
+5. Do similarity search in document vectors with prompt
+5. Add returned vectors into prompt vector space for langchain context
+
+### Naming Schema for for document tables
+"DOC_STORE_{ORG}_{DATA_SOURCE}_{AIRBYTE_NAME}_{VERSION}"
 ```mermaid
 erDiagram
-    organizations ||--|{ data_sources : belongs_to
+    organizations ||--|{ data_sources : "belongs_to; one per airbyte source"
     organizations ||--|{ members : belongs_to
-    data_sources ||--|{ documents : belongs_to
+    data_sources ||--o{ document_tables : "has  ; one table per source: allow different vector indizes"
     members ||--|| memberships : belongs_to
     data_sources ||--|| memberships : belongs_to
-    documents ||--|| memberships : belongs_to
+    document_tables ||--|| memberships : belongs_to
     organizations {
         uuid uuid PK
         name string
@@ -64,6 +69,8 @@ erDiagram
         description text
         bot_auth_data jsonb
         organization_uuid uuid FK
+        document_table_name text
+        airbyte_meta_data jsonb
     }
     members {
         uuid uuid PK
@@ -71,14 +78,15 @@ erDiagram
         name text
         organization_uuid uuid FK
     }
-    documents {
-        uuid uuid PK
+    document_tables {
+        name text PK
         data_source_uuid uuid FK
+        uuid uuid
         name text
         description text
         url text
         metadata jsonb
-        embeddings vector[]
+        embeddings vector[n]
         content text
     }
     memberships {
@@ -88,6 +96,7 @@ erDiagram
         namespace_user_name text
         member_uuid uuid FK
         document_uuid uuid FK
+        document_table_name text
     }
 ```
 
