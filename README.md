@@ -38,26 +38,45 @@ tbd
 `docker run -d -p 80:80 --env-file .env aishe-ai`
 
 ## Data structures
-### Planned
-For prompts regarding internal company data, which will the regulary be scraped.
-When user prompts system, following will happen:
-1. Get member from given email (search)
-2. Get memberships from member (join)
-3. Get all accessible document metadata (document_table_name, document_uuid)
-4. Get all documents from different document_table(data_sources) in parallel
-5. Do similarity search in document vectors with prompt
-5. Add returned vectors into prompt vector space for langchain context
+### Planned Query Flow for Internal Company Data Prompts
 
-### Naming Schema for for document tables
-"DOC_STORE_{ORG}_{DATA_SOURCE}_{AIRBYTE_NAME}_{VERSION}"
+The following steps outline the process for handling prompts regarding internal company data, which is regularly scraped and updated in the database. This process is designed to retrieve relevant document vectors based on the user's access rights, determined by their memberships in various data sources.
+
+#### 1. Retrieve Member Information
+- **Objective:** Identify the member based on the provided email.
+- **Process:** The system searches the `members` table using the given email address. This table contains member details, including their unique identifier (`uuid`), which is crucial for subsequent steps.
+
+#### 2. Acquire Member's Memberships
+- **Objective:** Determine the data sources to which the member has access.
+- **Process:** With the member's `uuid`, the system retrieves all associated memberships from the `memberships` table. Each membership record links a member to a data source and potentially to specific documents within that source.
+
+#### 3. Perform Similarity Search in Document Vectors
+- **Objective:** Find documents relevant to the user's prompt, to which the user has access.
+- **Process:** 
+  - The system uses the memberships obtained in the previous step to identify accessible documents. This involves a join operation between the `memberships` table and the dynamically named `document_table__{organization_name}_{data_source_name}`, using the `document_uuid`.
+  - A similarity search is conducted on the `embeddings` field within the `document_table`. This search finds documents whose vector representations are similar to the vector representation of the user's prompt.
+  - This step is crucial for ensuring that the user only accesses documents they are permitted to view, based on their memberships.
+
+#### 4. Integrate Found Vectors into Langchain Context
+- **Objective:** Enhance the language model's context with the found document vectors.
+- **Process:** 
+  - The vectors retrieved from the similarity search are added to the prompt's vector space. This integration is part of the language chain processing, which occurs outside the database.
+  - This step is essential for tailoring the language model's responses to be more relevant and informed by the specific content the user has access to.
+
+### Note:
+- The efficiency of this process is heavily reliant on the proper indexing of tables, especially for large datasets. Indexes on fields like `email` in the `members` table and `uuid` fields in all tables are crucial.
+- The similarity search's performance in the `document_table` depends on the implementation of vector operations in PostgreSQL, particularly the use of `pgvector`.
+- This flow assumes a robust system for managing and querying dynamically named `document_table`s, which is vital for the scalability and maintainability of the system.
+
+
 ```mermaid
 erDiagram
     organizations ||--|{ data_sources : "belongs_to; one per airbyte source"
-    organizations ||--|{ members : belongs_to
-    data_sources ||--o{ document_tables : "has  ; one table per source: allow different vector indizes"
-    members ||--|| memberships : belongs_to
-    data_sources ||--|| memberships : belongs_to
-    document_tables ||--|| memberships : belongs_to
+    organizations ||--|{ members : "belongs_to"
+    data_sources ||--o{ document_table : "has  ; one table per source: allow different vector indizes"
+    members ||--o{ memberships : "belongs_to"
+    data_sources ||--o{ memberships : "belongs_to"
+    document_table ||--o{ memberships : "belongs_to"
     organizations {
         uuid uuid PK
         name string
@@ -65,40 +84,63 @@ erDiagram
     }
     data_sources {
         uuid uuid PK
+        organization_uuid uuid FK
         name text
         description text
         bot_auth_data jsonb
-        organization_uuid uuid FK
-        document_table_name text
+        document_table_metadata jsonb
         airbyte_meta_data jsonb
     }
     members {
         uuid uuid PK
+        organization_uuid uuid FK
         email text
         name text
-        organization_uuid uuid FK
     }
-    document_tables {
-        name text PK
+    "document_table__{organization_name}_{data_source_name}" {
+        uuid uuid PK
         data_source_uuid uuid FK
-        uuid uuid
-        name text
+        name text 
         description text
         url text
-        metadata jsonb
-        embeddings vector[n]
+        context_data jsonb
+        embeddings pgvector
         content text
     }
     memberships {
         uuid uuid PK
-        data_source_role text
         data_source_uuid uuid FK
-        namespace_user_name text
         member_uuid uuid FK
         document_uuid uuid FK
-        document_table_name text
+        data_source_meta_data jsonb
     }
-```
+``` 
+### Indexing Recommendations:
+
+#### Organizations Table:
+- Primary Key Index on `uuid`.
+- Optional Index on `name` if frequently queried.
+
+#### Data Sources Table:
+- Primary Key Index on `uuid`.
+- Foreign Key Index on `organization_uuid`.
+- Optional Index on `name` if frequently queried.
+
+#### Members Table:
+- Primary Key Index on `uuid`.
+- Foreign Key Index on `organization_uuid`.
+- Index on `email` for search operations.
+
+#### Document Table:
+- Primary Key Index on `uuid`.
+- Foreign Key Index on `data_source_uuid`.
+- Optional Indexes on `name`, `url`, `metadata`.
+- Appropriate indexing for `embeddings` (pgvector).
+
+#### Memberships Table:
+- Primary Key Index on `uuid`.
+- Foreign Key Indexes on `data_source_uuid`, `member_uuid`, `document_uuid`.
+
 
 ### langchain pgvector
 ```mermaid
