@@ -111,7 +111,8 @@ erDiagram
         uuid uuid PK
         data_source_uuid uuid FK
         member_uuid uuid FK
-        document_uuid uuid FK
+        document_uuid uuid  
+        document_table_name text
         data_source_meta_data jsonb
     }
 ``` 
