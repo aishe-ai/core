@@ -187,7 +187,7 @@ def get_memberships_by_email(db: Session, member_email: str) -> List[Membership]
 
 
 def get_nearest_docs(
-    db: Session, member_email: str, reference_embedding: List[float], k: int = 4
+    db: Session, member_email: str, reference_embedding: List[float], k: int = 0.8
 ):
     # Query to get memberships and datasources for a member
     memberships_data = get_memberships_by_email(db, member_email)
@@ -206,10 +206,11 @@ def get_nearest_docs(
             reference_array_str = f"ARRAY[{reference_embeddings_str}]::vector"
 
             # Here we insert the reference embedding string and limit into the SQL statement
+            # We use 1 - (embeddings <=> reference_array_str) to calculate cosine similarity
             query = text(
                 f"SELECT content, context_data FROM {safe_table_name} "
                 f"WHERE uuid = :document_uuid AND "
-                f"embeddings <-> {reference_array_str} < :k"
+                f"(1 - (embeddings <=> {reference_array_str})) < :k"
             )
 
             results = db.execute(
