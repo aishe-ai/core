@@ -12,12 +12,8 @@ from sqlalchemy.dialects.postgresql import UUID as SQLAlchemyUUID
 from sqlalchemy import Column, ForeignKey, Index, text
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy.orm import joinedload
 
-from sqlalchemy import Table, MetaData
-from sqlalchemy.orm import aliased
-from sqlmodel import Session, select
-from typing import Dict, List
+from langchain.docstore.document import Document
 
 
 class Organization(SQLModel, table=True):
@@ -181,28 +177,22 @@ def document_table_factory(organization, data_source) -> SQLModel:
     return DocumentTableTemplate
 
 
-def get_member_by_email(db: Session, member_email: str) -> List[Membership]:
-    statement = (
-        select(Member)
-        .where(Member.email == member_email)
-        .options(joinedload(Member.memberships).joinedload(Membership.data_source))
-    )
-    member = db.exec(statement).first()
-    return member
-
-
-def get_embeddings_for_member(
-    db: Session, member_email: str, reference_embedding: List[float], k: int = 4
-):
-    # Query to get memberships and datasources for a member
-    memberships_data = db.exec(
+def get_memberships_by_email(db: Session, member_email: str) -> List[Membership]:
+    return db.exec(
         select(Membership, DataSource)
         .join(DataSource, DataSource.uuid == Membership.data_source_uuid)
         .join(Member, Member.uuid == Membership.member_uuid)
         .where(Member.email == member_email)
     ).all()
 
-    embeddings = {}
+
+def get_nearest_docs(
+    db: Session, member_email: str, reference_embedding: List[float], k: int = 4
+):
+    # Query to get memberships and datasources for a member
+    memberships_data = get_memberships_by_email(db, member_email)
+    docs = []
+
     for membership, data_source in memberships_data:
         # Extract the document table name from data_source metadata
         document_table_name = data_source.document_table_metadata["name"]
@@ -214,394 +204,27 @@ def get_embeddings_for_member(
             # Flatten the reference_embedding into a comma-separated string and cast it as a PostgreSQL vector type
             reference_embeddings_str = ",".join(map(str, reference_embedding))
             reference_array_str = f"ARRAY[{reference_embeddings_str}]::vector"
+
             # Here we insert the reference embedding string and limit into the SQL statement
             query = text(
-                f"SELECT uuid, embeddings FROM {safe_table_name} "
-                # f"ORDER BY embeddings <-> {reference_array_str} "
-                f"WHERE embeddings <-> {reference_array_str} < :k"
+                f"SELECT content, context_data FROM {safe_table_name} "
+                f"WHERE uuid = :document_uuid AND "
+                f"embeddings <-> {reference_array_str} < :k"
             )
 
-            result = db.execute(
+            results = db.execute(
                 query,
                 {
-                    "document_uuid": membership.document_uuid,  # Assuming you want to compare against a specific document's UUID
-                    "k": k,  # Limit of results to return
+                    "document_uuid": membership.document_uuid,
+                    "k": k,
                 },
             ).fetchall()
-            embeddings[membership.document_uuid] = [
-                {"uuid": row[0], "embeddings": row[1]} for row in result
-            ]
-    return embeddings
 
-
-# def get_embeddings_for_member(
-#     db: Session, member_email: str, embeddings: List[float], k: int
-# ):
-#     # Assuming that we have a method in the PGVector class or elsewhere that takes an
-#     # embeddings vector and returns a distance SQLAlchemy column object
-#     # To avoid circular imports or undefined names, these classes and methods
-#     # need to be defined in their respective modules
-
-#     # Initialize PGVector, provide necessary arguments such as connection_string, etc.
-#     pgvector_instance = PGVector(...)  # All required parameters should be passed here
-
-#     # Query to get memberships and datasources for a member
-#     memberships_data = db.exec(
-#         select(Membership, DataSource)
-#         .join(DataSource, DataSource.uuid == Membership.data_source_uuid)
-#         .join(Member, Member.uuid == Membership.member_uuid)
-#         .where(Member.email == member_email)
-#     ).all()
-
-#     nearest_embeddings = {}
-
-#     for membership, data_source in memberships_data:
-#         # Extract the document table name from the data_source metadata
-#         document_table_name = data_source.document_table_metadata.get("name")
-
-#         if document_table_name:
-#             # Assume the DocumentModel is a dynamic model for the document's embeddings
-#             # You need to implement the function get_dynamic_document_model to retrieve the correct model
-#             DocumentModel = get_dynamic_document_model(document_table_name)
-
-#             # Access the distance function from the PGVector instance
-#             distance_column = pgvector_instance.distance_strategy(embeddings)
-
-#             # Use the ORM query method to get the distances and order by closest first
-#             # Replace CollectionStore and EmbeddingStore with the correct references if they are different
-#             results = (
-#                 db.query(DocumentModel, distance_column.label("distance"))
-#                 .filter(DocumentModel.uuid != membership.document_uuid)
-#                 .join(
-#                     pgvector_instance.CollectionStore,
-#                     DocumentModel.collection_id
-#                     == pgvector_instance.CollectionStore.uuid,
-#                 )
-#                 .order_by("distance")
-#                 .limit(k)
-#                 .all()
-#             )
-
-#             # Store the nearest embeddings for the membership document
-#             nearest_embeddings[str(membership.document_uuid)] = [
-#                 {
-#                     "uuid": row.uuid,
-#                     "embeddings": row.embeddings,
-#                     "distance": row.distance,
-#                 }
-#                 for row in results
-#             ]
-
-#     return nearest_embeddings
-
-
-# def get_dynamic_document_model(
-#     db: Session, organization_uuid: uuid_pkg.UUID, data_source_uuid: uuid_pkg.UUID
-# ) -> Type[BaseDocumentTableTemplate]:
-#     # Retrieve the organization and data source records from the database
-#     organization = db.exec(
-#         select(Organization).where(Organization.uuid == organization_uuid)
-#     ).first()
-#     data_source = db.exec(
-#         select(DataSource).where(DataSource.uuid == data_source_uuid)
-#     ).first()
-
-#     if not organization or not data_source:
-#         raise ValueError("Organization or data source not found")
-
-#     # Generate the dynamic document table class using the factory
-#     DocumentTable = document_table_factory(organ    zation, data_source)
-
-#     # Create the document table in the database if it doesn't exist yet
-#     if not db.engine.dialect.has_table(db.engine, DocumentTable.__tablename__):
-#         DocumentTable.metadata.create_all(db.engine)
-
-#     return DocumentTable
-
-
-# def get_embeddings_for_member(
-#     db: Session, member_email: str, reference_embedding: List[float], k: int
-# ):
-#     # Query to get memberships and datasources for a member
-#     memberships_data = db.exec(
-#         select(Membership, DataSource)
-#         .join(DataSource, DataSource.uuid == Membership.data_source_uuid)
-#         .join(Member, Member.uuid == Membership.member_uuid)
-#         .where(Member.email == member_email)
-#     ).all()
-
-#     # Convert reference_embedding to a PostgreSQL array
-#     reference_str = "','".join(str(v) for v in reference_embedding)
-
-#     nearest_embeddings = {}
-
-#     for membership, data_source in memberships_data:
-#         # Extract the document table name from data_source metadata
-#         document_table_name = data_source.document_table_metadata.get("name")
-
-#         if document_table_name:
-#             safe_table_name = f'"{document_table_name}"'
-
-#             # Explicitly cast the reference embedding with the correct type for the pgvector comparison
-#             subquery_text = f"""
-#                 SELECT uuid, embeddings, (embeddings <-> ARRAY[{reference_embedding}]::vector) AS distance
-#                 FROM {safe_table_name}
-#                 WHERE uuid != :document_uuid
-#                 ORDER BY distance
-#                 LIMIT :k
-#             """
-
-#             result = db.execute(
-#                 text(subquery_text),
-#                 {"document_uuid": str(membership.document_uuid), "k": k},
-#             ).fetchall()
-
-#             nearest_embeddings[str(membership.document_uuid)] = [
-#                 {"uuid": row[0], "embeddings": row[1], "distance": row[2]}
-#                 for row in result
-#             ]
-
-#     return nearest_embeddings
-
-
-# def get_embeddings_for_member(
-#     db: Session, member_email: str, reference_embedding: List[float], k: int = 4
-# ):
-#     # Query to get memberships and datasources for a member
-#     memberships_data = db.exec(
-#         select(Membership, DataSource)
-#         .join(DataSource, DataSource.uuid == Membership.data_source_uuid)
-#         .join(Member, Member.uuid == Membership.member_uuid)
-#         .where(Member.email == member_email)
-#     ).all()
-
-#     # Convert reference_embedding to a string that pgvector understands
-#     reference_as_str = f"ARRAY{reference_embedding}"
-
-#     # Placeholder for nearest embeddings
-#     nearest_embeddings = {}
-
-#     for membership, data_source in memberships_data:
-#         # Extract the document table name from data_source metadata
-#         document_table_name = data_source.document_table_metadata["name"]
-#         # Construct and execute a raw SQL query for each document table
-#         if document_table_name:
-#             safe_table_name = f'"{document_table_name}"'
-
-#             # Ensure casting to the correct array type for pgvector
-#             subquery_text = f"""SELECT uuid, embeddings,
-#                             (embeddings <-> ARRAY[{reference_str}]::float[]) AS distance
-#                      FROM {safe_table_name}
-#                      WHERE uuid != :document_uuid
-#                      ORDER BY distance
-#                      LIMIT :k"""
-
-#             result = db.execute(
-#                 text(subquery_text), {"document_uuid": membership.document_uuid, "k": k}
-#             ).fetchall()
-
-#             # Record the nearest embeddings for the membership document
-#             nearest_embeddings[membership.document_uuid] = [
-#                 {
-#                     "uuid": row.uuid,
-#                     "embeddings": row.embeddings,
-#                     "distance": row.distance,
-#                 }
-#                 for row in result
-#             ]
-
-#     return nearest_embeddings
-
-#     # Construct and execute a raw SQL query for each document table
-#     if document_table_name:
-#         safe_table_name = f'"{document_table_name}"'
-
-#         # Performing a subquery to get the nearest embeddings
-#         subquery = text(
-#             f"""SELECT uuid, embeddings, (embeddings <-> {reference_as_str}) AS distance
-#                  FROM {safe_table_name}
-#                  WHERE uuid != :document_uuid
-#                  ORDER BY (embeddings <-> {reference_as_str})
-#                  LIMIT :k"""
-#         )
-
-#         print(subquery)
-
-#         result = db.execute(
-#             subquery, {"document_uuid": membership.document_uuid, "k": k}
-#         ).fetchall()
-
-#         # Collect the nearest embeddings in the dictionary
-#         nearest_embeddings[membership.document_uuid] = [
-#             {"uuid": row[0], "embeddings": row[1], "distance": row[2]}
-#             for row in result
-#         ]
-
-# return nearest_embeddings
-
-
-# def get_embeddings_for_member1(
-#     db: Session, member_email: str
-# ) -> Dict[str, List[float]]:
-#     embeddings = {}
-
-#     # Fetch memberships and datasources for the member
-#     memberships_data = db.exec(
-#         select(Membership, DataSource)
-#         .join(DataSource, DataSource.uuid == Membership.data_source_uuid)
-#         .join(Member, Member.uuid == Membership.member_uuid)
-#         .where(Member.email == member_email)
-#     ).all()
-
-#     metadata = MetaData()
-
-#     for membership, data_source in memberships_data:
-#         document_table_name = data_source.document_table_metadata["name"]
-
-#         # Use SQLAlchemy's Table reflection
-#         document_table = Table(document_table_name, metadata, autoload_with=db)
-#         Document = aliased(document_table)
-
-#         # Query the document table using the reflected table
-#         query = select([Document.c.embeddings]).where(
-#             Document.c.uuid == membership.document_uuid
-#         )
-#         result = db.execute(query).fetchone()
-#         print(result)
-#         # if result:
-#         #     embeddings[str(membership.document_uuid)] = result.embeddings
-
-#     return embeddings
-
-
-# from typing import List, Any
-# import sqlalchemy
-# from sqlalchemy.orm import Session
-# from sqlalchemy.sql.expression import select, text
-
-
-# def get_closest_embeddings_for_member(
-#     db: Session, member_email: str, reference_embedding, k: int = 4
-# ):
-#     # Subquery for member's document_uuids
-#     member_docs_subq = (
-#         select(Membership.__table__.c.document_uuid)
-#         .join(
-#             Member.__table__,
-#             Member.__table__.c.uuid == Membership.__table__.c.member_uuid,
-#         )
-#         .join(
-#             DataSource.__table__,
-#             DataSource.__table__.c.uuid == Membership.__table__.c.data_source_uuid,
-#         )
-#         .where(Member.__table__.c.email == member_email)
-#         .subquery()
-#     )
-
-#     # Query across all document tables for embeddings accessible by the member
-#     accessible_embeddings = []
-#     document_tables_meta = MetaData()
-
-#     print(member_docs_subq)
-
-#     data_sources = db.exec(
-#         select(DataSource)
-#         .join(Membership, Membership.data_source_uuid == DataSource.uuid)
-#         .join(Member, Member.uuid == Membership.member_uuid)
-#         .where(Member.email == member_email)
-#     ).all()
-#     print(data_sources)
-#     for data_source in data_sources:
-#         document_table_name = data_source.document_table_metadata["name"]
-#         document_table = Table(
-#             document_table_name, document_tables_meta, autoload_with=db
-#         )
-
-#         # Construct the vector similarity search query
-#         vector_distance_query = (
-#             select(
-#                 document_table.c.uuid.label("doc_uuid"),
-#                 func.vector_distance(
-#                     document_table.c.embeddings, reference_embedding
-#                 ).label("distance"),
-#             )
-#             .where(document_table.c.uuid.in_(member_docs_subq))
-#             .order_by("distance")
-#             .limit(k)
-#         )
-
-#         embeddings = db.execute(vector_distance_query).fetchall()
-#         accessible_embeddings.extend(embeddings)
-
-#     return accessible_embeddings
-#     # # We use a subquery to find the memberships that link members to data sources
-# accessible_memberships_subq = (
-#     select([Membership.__table__.c.document_uuid])
-#     .join(
-#         Member.__table__,
-#         Member.__table__.c.uuid == Membership.__table__.c.member_uuid,
-#     )
-#     .join(
-#         DataSource.__table__,
-#         DataSource.__table__.c.uuid == Membership.__table__.c.data_source_uuid,
-#     )
-#     .where(Member.__table__.c.email == member_email)
-#     .subquery("accessible_memberships")
-# )
-
-# # Define an ad hoc table reflecting the document tables because they are dynamic
-# document_tables = {}  # Cache document tables to avoid repeated reflection
-# closest_embeddings = []
-
-# # Now, query the data source dynamically by joining the data source and membership subquery
-# data_source_statement = (
-#     select(
-#         [
-#             DataSource.__table__.c.uuid,
-#             DataSource.__table__.c.document_table_metadata,
-#         ]
-#     )
-#     .join_from(
-#         DataSource.__table__,
-#         accessible_memberships_subq,
-#         DataSource.__table__.c.uuid
-#         == accessible_memberships_subq.c.data_source_uuid,
-#     )
-#     .distinct()
-# )
-# print(data_source_statement)
-
-# for data_source_uuid, metadata in db.execute(data_source_statement):
-#     document_table_name = metadata["name"]
-
-#     # Reflect the document table for querying if not already cached
-#     if document_table_name not in document_tables:
-#         document_tables[document_table_name] = Table(
-#             document_table_name, MetaData(), autoload_with=db.bind
-#         )
-
-#     document_table = document_tables[document_table_name]
-
-#     # Construct the query to get embeddings and compute distance
-#     distance_subquery = (
-#         select(
-#             [
-#                 document_table.c.uuid,
-#                 func.vector_distance(
-#                     document_table.c.embeddings, reference_embedding
-#                 ).label("distance"),
-#                 document_table.c.embeddings,
-#             ]
-#         )
-#         .where(document_table.c.uuid == accessible_memberships_subq.c.document_uuid)
-#         .order_by("distance")
-#         .limit(k)
-#         .alias("ordered_distances")
-#     )
-
-#     # We execute this query to get the closest embeddings per document table
-#     query_results = db.execute(select([distance_subquery])).fetchall()
-#     closest_embeddings.extend(query_results)
-
-# # Return a flat list of embeddings and distances
-# return closest_embeddings
+            for row in results:
+                doc = Document(
+                    page_content=row[0],
+                    metadata=row[1],
+                    # {"source": "downloads/meetups.pdf", "page": 0}
+                )
+                docs.append(doc)
+    return docs

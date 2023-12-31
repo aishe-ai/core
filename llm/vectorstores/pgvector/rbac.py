@@ -2,41 +2,28 @@ import os
 import logging
 import enum
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
     List,
     Optional,
     Tuple,
-    Type,
 )
+
 import sqlalchemy
+from sqlmodel import Session
+
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.pgvector import PGVector
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
-
-
 from langchain.memory import ConversationBufferMemory
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 
-from sqlmodel import Field, Relationship, SQLModel, Session, select
-
-
 from data_model import (
-    get_member_by_email,
-    get_embeddings_for_member,
-    # get_embeddings_for_member,
-    # # get_embeddings_and_distances_for_member,
-    # get_closest_embeddings_for_member,
+    get_memberships_by_email,
+    get_nearest_docs,
 )
-
-# from dotenv import load_dotenv
-
-# load_dotenv()
 
 
 class DistanceStrategy(str, enum.Enum):
@@ -85,14 +72,6 @@ class RBACVector(PGVector):
     # Custom initialization logic
     def __post_init__(self):
         self._conn = self.connect()
-        # self.create_vector_extension()
-        # from langchain.vectorstores._pgvector_data_models import (
-        #     CollectionStore,
-        #     EmbeddingStore,
-        # )
-
-        # self.CollectionStore = CollectionStore
-        # self.EmbeddingStore = EmbeddingStore
 
     def connect(self) -> sqlalchemy.engine.Connection:
         engine = sqlalchemy.create_engine(self.connection_string)
@@ -131,21 +110,15 @@ class RBACVector(PGVector):
         user = filter["user"]
         embedding = self.embedding_function.embed_query(text=query)
 
-        print(query, user)
-
+        docs = []
         with Session(self._conn) as session:
             member_email = "testmember@example.com"
-            embeddings = get_embeddings_for_member(session, member_email, embedding, 4)
-            # print(embeddings)
-            for embedding in embeddings:
-                print(embedding.document_uuid)
-            # member = get_member_by_email(session, member_email)
-            # # print(member)
-            # for membership in member.memberships:
-            #     print(membership.data_source)
-            #     print("------------------")
+            memberships = get_memberships_by_email(session, member_email)
+            print(query, user, len(memberships))
 
-        return []
+            docs = get_nearest_docs(session, member_email, embedding)
+        print(docs)
+        return docs
 
 
 # Add write functionality as needed
@@ -154,11 +127,9 @@ class RBACVector(PGVector):
 rbac_vector_store = RBACVector(
     connection_string=CONNECTION_STRING,
     embedding_function=OpenAIEmbeddings(),
-    # collection_name="your_collection_name",  # Optional: specify your collection name
-    # Add other optional parameters as needed
 )
 
-prompt = "Return all accessible vectors as text"
+prompt = "Summerize given context to you"
 
 memory = ConversationBufferMemory(
     memory_key="chat_history",
@@ -167,7 +138,6 @@ memory = ConversationBufferMemory(
     return_messages=True,
 )
 
-# https://github.com/hwchase17/chat-your-data
 llm = ChatOpenAI(model_name="gpt-4", temperature=1)
 # result = llm.invoke("hello")
 # print(result)
@@ -182,8 +152,7 @@ conversation_qa_chain = ConversationalRetrievalChain.from_llm(
     retriever=retriever,
     memory=memory,
     return_source_documents=True,
-    # **additional_arguments,  # Unpack additional arguments here
 )
 conversation_result = conversation_qa_chain({"question": prompt})
 
-print(conversation_result)
+print(conversation_result["answer"])
