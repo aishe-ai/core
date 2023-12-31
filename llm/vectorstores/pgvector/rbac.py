@@ -107,14 +107,13 @@ class RBACVector(PGVector):
         k: int = 4,
         filter: Optional[dict] = None,
     ) -> List[Tuple[Document, float]]:
-        user = filter["user"]
+        member_email = filter["user"]
         embedding = self.embedding_function.embed_query(text=query)
 
         docs = []
         with Session(self._conn) as session:
-            member_email = "testmember@example.com"
             memberships = get_memberships_by_email(session, member_email)
-            print(query, user, len(memberships))
+            print(query, member_email, len(memberships))
 
             docs = get_nearest_docs(session, member_email, embedding)
         print(docs)
