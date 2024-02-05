@@ -18,11 +18,11 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
 )
 
 
-def new_chroma_vector_store(documents):
+def new_vector_store(documents):
     return Chroma.from_documents(documents, OpenAIEmbeddings())
 
 
-def new_vector_store(documents):
+def new_rbac_vector_store(documents):
     # aka table name
     collection_name = "vectorTests"
     return PGVector.from_documents(
