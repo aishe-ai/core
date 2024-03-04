@@ -11,7 +11,8 @@ python-dotenv==1.0.0
 tiktoken==0.5.2
 pydantic==1.10.13
 slack-sdk==3.26.1
-openai==1.6.1
+# openai==1.6.1
+openai==0.28.1
 python-multipart==0.0.6
 docx2txt==0.8
 python-docx==1.1.0
@@ -24,7 +25,7 @@ GitPython==3.1.40
 fake_useragent==1.4.0
 black==23.12.1
 numexpr==2.8.8
-pysqlite3-binary==0.5.2.post2
+# pysqlite3-binary==0.5.2.post2
 pgvector==0.2.4
-psycopg2-binary==2.9.9
-psycopg2==2.9.9
+# psycopg2-binary==2.9.9
+# psycopg2==2.9.9

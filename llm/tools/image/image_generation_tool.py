@@ -35,7 +35,7 @@ def image_generation_tool(
     try:
         # Send image generation request to DALL-E
         dalle_response = openai.Image.create(
-            prompt=prompt, n=3, size="1024x1024"
+            prompt=prompt, n=1, size="1024x1024", model="dall-e-3"
         )  # Adjust n to 3 for three images
         data = dalle_response["data"]
 
