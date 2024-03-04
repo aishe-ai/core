@@ -29,20 +29,9 @@ def send_error_notification(error_message, slack_channel_id):
         channel=slack_channel_id, text=f"Error: {error_message}"
     )
 
-def upload_image(file_path):
-    # Upload the image file
-    with open(file_path, "rb") as file:
-        response = requests.post(
-            "https://api.imgur.com/3/image", 
-            headers={"Authorization": "Client-ID 1fe985b9dcd1d26"},
-            files={"image": file},
-        )
-        if response.status_code == 200:
-            return response.json()["data"]["link"]
-        else:
-            # Handle upload failure
-            print("Failed to upload image:", response.text)
-            return None
+def image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
 
 @tool("image operations", return_direct=True, args_schema=ImageEditingTool)
 def image_operations_tool(
@@ -58,8 +47,9 @@ def image_operations_tool(
     if not os.path.exists(url):
         image_url = url
     else:
-        image_url = upload_image(url)
+        image_url = "data:image/jpeg;base64," + image_to_base64(url)
 
+    print(image_url)
     try:
         gpt_4_response = openai.ChatCompletion.create(
             model="gpt-4-vision-preview",
