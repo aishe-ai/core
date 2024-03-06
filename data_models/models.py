@@ -53,6 +53,7 @@ class DeeplDocumentTranslationTool(BaseModel):
     file_path: FilePath = Field(
         description="Filepath of original file, provided by systemmessage, if not provided search it in downloads/ within this project"
     )
+    url: str = Field("")
     target_language_abbrevation: str = Field(
         description="Target language provided by user converted to a deepl valid language abbrevation by model(you). Must also be in uppercase"
     )
@@ -72,6 +73,13 @@ class VectorStoreDocumentTool(BaseModel):
 
 
 class ImageCreationTool(BaseModel):
+    slack_channel_id: str = Field(
+        description="Source slack channel, provided by default value"
+    )
+    prompt: str = Field(description="Prompt from user")
+
+class ImageEditingTool(BaseModel):
+    url: str = Field("Url of an image provided by user, if not provided check for downloaded image in downloads/ within this project")
     slack_channel_id: str = Field(
         description="Source slack channel, provided by default value"
     )

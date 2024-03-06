@@ -15,6 +15,7 @@ from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.deepl.file_translation_tool import file_translation_tool
 from llm.tools.document.document_vector_store_tool import document_vector_store_tool
 from llm.tools.image.image_generation_tool import image_generation_tool
+from llm.tools.image.image_operations_tool import image_operations_tool
 
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -38,6 +39,7 @@ def new_conversional_agent(chat_model=DEFAULT_CHAT_MODEL, memory=EMPTY_MEMORY):
         file_translation_tool,
         document_vector_store_tool,
         image_generation_tool,
+        image_operations_tool,
     ]
 
     system_message = f"""
