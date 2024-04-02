@@ -20,6 +20,9 @@ from llm.memory.slack_memory import slack_to_llm_memory
 from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK, EXAMPLE_PROMPTS
 
 import requests
+import hmac
+import hashlib
+import time
 
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
 
@@ -89,6 +92,9 @@ async def slack_rating(payload: str = Form(...)):
     return payload
 
 
+async def verify_slack_signature(request):
+    return
+
 # must return given payload for slack challenge:
 # slack retry behaviour
 # https://api.slack.com/apis/connections/events-api#retries
@@ -96,50 +102,72 @@ async def slack_rating(payload: str = Form(...)):
 async def new_slack_event(
     request: Request, payload: dict, background_tasks: BackgroundTasks
 ):
-    try:
-        if "has joined the channel" in payload["event"]["text"]:
-            await new_user_handler(payload)
-        # check if message is from user, bot message has a bot_id key
-        if (
-            payload["event"]["client_msg_id"]
-            and f"@{SLACK_BOT_ID}" in payload["event"]["text"]
-        ):
-            prompt_parameters = PromptParameters(
-                prompt=payload["event"]["text"],
-                space_id="~622753c759c0740069daf1e1",
-                source={"name": "slack", "id": payload["event"]["channel"]},
-            )
+    slack_signing_secret = os.getenv("SLACK_SIGNING_SECRET")
+    request_body = await request.body()
+    json_body = json.loads(request_body)
+    query_string = urllib.parse.urlencode(json_body)
+    timestamp = int(request.headers['x-slack-request-timestamp'])
+    if abs(time.time() - timestamp) > 60 * 5:
+        return
+    
+    sig_basestring = 'v0:' + str(timestamp) + ':' + query_string
+    sig_basestring = f"v0:{timestamp}:{request_body}".encode("utf-8")
+    my_signature = "v0=" + hmac.new(
+        slack_signing_secret.encode("utf-8"),
+        sig_basestring,
+        hashlib.sha256,
+    ).hexdigest()
 
-            SLACK_CLIENT.chat_postMessage(
-                channel=prompt_parameters.source.id,
-                blocks=LOADING_BLOCK,
-                text=LOADING_INDICATOR,
-            )
+    slack_signature = request.headers['x-slack-signature']
 
-            # Check if files are attached
-            if "files" in payload["event"]:
-                for file_info in payload["event"]["files"]:
-                    file_url = file_info["url_private_download"]
-                    file_name = file_info["name"]
-                    logger.info(
-                        f"Handling file: {prompt_parameters.prompt} | {file_name}"
-                    )
-                    background_tasks.add_task(
-                        download_handler,
-                        prompt_parameters,
-                        file_url,
-                        file_name,
-                    )
-            else:
-                # dont use endpoint function because they will not run in the background
-                background_tasks.add_task(prompt_handler, prompt_parameters)
+    print(my_signature)
+    print(slack_signature)
 
-    # slack will generate a new event for the bot message, but this except will ignore it
-    except KeyError:
-        pass
+    if hmac.compare_digest(my_signature, slack_signature):
+        print("verified")
+        try:
+            if "has joined the channel" in payload["event"]["text"]:
+                await new_user_handler(payload)
+            # check if message is from user, bot message has a bot_id key
+            if (
+                payload["event"]["client_msg_id"]
+                and f"@{SLACK_BOT_ID}" in payload["event"]["text"]
+            ):
+                prompt_parameters = PromptParameters(
+                    prompt=payload["event"]["text"],
+                    space_id="~622753c759c0740069daf1e1",
+                    source={"name": "slack", "id": payload["event"]["channel"]},
+                )
 
-    return JSONResponse(content=payload)
+                SLACK_CLIENT.chat_postMessage(
+                    channel=prompt_parameters.source.id,
+                    blocks=LOADING_BLOCK,
+                    text=LOADING_INDICATOR,
+                )
 
+                # Check if files are attached
+                if "files" in payload["event"]:
+                    for file_info in payload["event"]["files"]:
+                        file_url = file_info["url_private_download"]
+                        file_name = file_info["name"]
+                        logger.info(
+                            f"Handling file: {prompt_parameters.prompt} | {file_name}"
+                        )
+                        background_tasks.add_task(
+                            download_handler,
+                            prompt_parameters,
+                            file_url,
+                            file_name,
+                        )
+                else:
+                    # dont use endpoint function because they will not run in the background
+                    background_tasks.add_task(prompt_handler, prompt_parameters)
+
+        # slack will generate a new event for the bot message, but this except will ignore it
+        except KeyError:
+            pass
+
+        return JSONResponse(content=payload)
 
 async def new_user_handler(payload):
     examples = await get_example_prompts()
