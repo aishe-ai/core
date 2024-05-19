@@ -24,21 +24,20 @@ SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 DEEPL_API_URL = os.getenv("DEEPL_API_URL")
 
+
 def send_error_notification(error_message, slack_channel_id):
     SLACK_CLIENT.chat_postMessage(
         channel=slack_channel_id, text=f"Error: {error_message}"
     )
 
+
 def image_to_base64(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
+
 @tool("image operations", return_direct=True, args_schema=ImageEditingTool)
-def image_operations_tool(
-    prompt: str,
-    slack_channel_id: str,
-    url: str
-) -> str:
+def image_operations_tool(prompt: str, slack_channel_id: str, url: str) -> str:
     """
     Use this tool for operation on images from a prompt.
     """
@@ -62,8 +61,8 @@ def image_operations_tool(
                             "type": "image_url",
                             "image_url": {
                                 "url": image_url,
-                            }
-                        }
+                            },
+                        },
                     ],
                 }
             ],
@@ -73,7 +72,7 @@ def image_operations_tool(
             {
                 "type": "section",
                 "block_id": "sectionBlockOnlyPlainText",
-                "text": { 
+                "text": {
                     "type": "plain_text",
                     "text": data[0]["message"]["content"],
                     "emoji": True,
@@ -87,4 +86,4 @@ def image_operations_tool(
         print(f"An error occurred: {str(e)}")
         blocks = []  # Define blocks in case of error
 
-    return json.dumps({"slack_response": blocks}) 
+    return json.dumps({"slack_response": blocks})
