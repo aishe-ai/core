@@ -33,6 +33,7 @@ load_dotenv()
 
 SLACK_BOT_OAUTH_TOKEN = os.getenv("SLACK_BOT_OAUTH_TOKEN")
 SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 
@@ -101,16 +102,17 @@ async def verify_slack_signature(request):
 async def new_slack_event(
     request: Request, payload: dict, background_tasks: BackgroundTasks
 ):
-    slack_signing_secret = os.getenv("SLACK_SIGNING_SECRET")
-    signature_verifier = SignatureVerifier(slack_signing_secret)
+    signature_verifier = SignatureVerifier(SLACK_SIGNING_SECRET)
     request_body = await request.body()
-    timestamp = request.headers["x-slack-request-timestamp"]
-    signature = request.headers["x-slack-signature"]
+    timestamp = request.headers.get("x-slack-request-timestamp")
+    signature = request.headers.get("x-slack-signature")
 
     if not signature_verifier.is_valid(
-        body=request_body.decode("utf-8"), timestamp=timestamp, signature=signature
+        body=request_body, timestamp=timestamp, signature=signature
     ):
-        return JSONResponse(content=payload, status_code=401)  # Unauthorized
+        return JSONResponse(
+            content={"error": "Invalid signature"}, status_code=401
+        )  # Unauthorized
 
     try:
         if "has joined the channel" in payload["event"]["text"]:
@@ -153,6 +155,8 @@ async def new_slack_event(
     # slack will generate a new event for the bot message, but this except will ignore it
     except KeyError:
         pass
+    except Exception as error:
+        print(error)
 
     return JSONResponse(content=payload)
 
