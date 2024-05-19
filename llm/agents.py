@@ -12,6 +12,7 @@ from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.deepl.file_translation_tool import file_translation_tool
 from llm.tools.document.document_vector_store_tool import document_vector_store_tool
 from llm.tools.image.image_generation_tool import image_generation_tool
+from llm.tools.image.image_operations_tool import image_operations_tool
 from llm.config import HAIKU_CHAT_MODEL
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -39,8 +40,9 @@ def new_conversional_agent(chat_model=HAIKU_CHAT_MODEL, memory=EMPTY_MEMORY):
 
     system_message = f"""
         You are a chat bot which helps the user find answers to his question.
-        Answer in the language of the user messages, default to german.
-        Use all past messages within your memory for context
+        !You have to answer in the language of the user messages, default is always german!
+        !For internal action you are allowed to use english, like function calling!
+        Use all past messages within your memory for context.
     """
     system_message = SystemMessage(content=system_message)
 
