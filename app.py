@@ -2,6 +2,7 @@ import os
 import urllib.parse
 import json
 import logging
+import requests
 
 from fastapi import FastAPI, BackgroundTasks, Request, Form
 from fastapi.responses import JSONResponse
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 
 from slack_sdk import WebClient
+from slack_sdk.signature import SignatureVerifier
 from slack_sdk.errors import SlackApiError
 
 
@@ -19,7 +21,6 @@ from data_models.models import *
 from llm.memory.slack_memory import slack_to_llm_memory
 from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK, EXAMPLE_PROMPTS
 
-import requests
 
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
 
@@ -32,6 +33,7 @@ load_dotenv()
 
 SLACK_BOT_OAUTH_TOKEN = os.getenv("SLACK_BOT_OAUTH_TOKEN")
 SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 
@@ -89,6 +91,10 @@ async def slack_rating(payload: str = Form(...)):
     return payload
 
 
+async def verify_slack_signature(request):
+    return
+
+
 # must return given payload for slack challenge:
 # slack retry behaviour
 # https://api.slack.com/apis/connections/events-api#retries
@@ -96,6 +102,18 @@ async def slack_rating(payload: str = Form(...)):
 async def new_slack_event(
     request: Request, payload: dict, background_tasks: BackgroundTasks
 ):
+    signature_verifier = SignatureVerifier(SLACK_SIGNING_SECRET)
+    request_body = await request.body()
+    timestamp = request.headers.get("x-slack-request-timestamp")
+    signature = request.headers.get("x-slack-signature")
+
+    if not signature_verifier.is_valid(
+        body=request_body, timestamp=timestamp, signature=signature
+    ):
+        return JSONResponse(
+            content={"error": "Invalid signature"}, status_code=401
+        )  # Unauthorized
+
     try:
         if "has joined the channel" in payload["event"]["text"]:
             await new_user_handler(payload)
@@ -131,12 +149,14 @@ async def new_slack_event(
                         file_name,
                     )
             else:
-                # dont use endpoint function because they will not run in the background
+                # don't use endpoint function because they will not run in the background
                 background_tasks.add_task(prompt_handler, prompt_parameters)
 
     # slack will generate a new event for the bot message, but this except will ignore it
     except KeyError:
         pass
+    except Exception as error:
+        print(error)
 
     return JSONResponse(content=payload)
 
