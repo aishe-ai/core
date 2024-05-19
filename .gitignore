@@ -2,3 +2,4 @@
 __pycache__
 downloads/
 tests/
+.venv

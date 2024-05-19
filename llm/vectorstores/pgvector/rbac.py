@@ -12,12 +12,12 @@ from typing import (
 import sqlalchemy
 from sqlmodel import Session
 
-from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.pgvector import PGVector
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.embeddings.base import Embeddings
+from langchain_community.vectorstores.pgvector import PGVector
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 
 from data_model import (

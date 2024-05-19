@@ -2,10 +2,10 @@ import os
 import json
 from dotenv import load_dotenv
 
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.tools import tool
-from langchain.document_loaders import ConfluenceLoader
+from langchain_community.document_loaders import ConfluenceLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
@@ -20,7 +20,7 @@ CONFLUENCE_USERNAME = os.getenv("CONFLUENCE_USERNAME")
 CONFLUENCE_URL = os.getenv("CONFLUENCE_URL")
 
 
-@tool("confluence search", return_direct=True, args_schema=ConfluenceToolParams)
+@tool("confluence search", args_schema=ConfluenceToolParams, return_direct=True)
 def confluence_tool(
     prompt: str, url: str, confluence_space_id: str, confluence_page_id: str
 ) -> str:

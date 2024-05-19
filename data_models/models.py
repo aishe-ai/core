@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field, FilePath
+# from pydantic import FilePath
+from langchain.pydantic_v1 import BaseModel, Field, FilePath
+
 from typing import Optional
 
 
@@ -78,8 +80,11 @@ class ImageCreationTool(BaseModel):
     )
     prompt: str = Field(description="Prompt from user")
 
+
 class ImageEditingTool(BaseModel):
-    url: str = Field("Url of an image provided by user, if not provided check for downloaded image in downloads/ within this project")
+    url: str = Field(
+        "Url of an image provided by user, if not provided check for downloaded image in downloads/ within this project"
+    )
     slack_channel_id: str = Field(
         description="Source slack channel, provided by default value"
     )
