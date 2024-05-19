@@ -2,7 +2,7 @@ import json
 import shutil
 import re
 
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.tools import tool
 from langchain.text_splitter import CharacterTextSplitter
@@ -10,7 +10,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 from langchain.text_splitter import CharacterTextSplitter
 from git import Repo
-from langchain.document_loaders import GitLoader
+from langchain_community.document_loaders import GitLoader
 
 from data_models.models import GitToolParams
 from llm.vector_store import new_vector_store

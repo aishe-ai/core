@@ -2,13 +2,13 @@ import os
 import json
 from dotenv import load_dotenv
 
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.tools import tool
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
-from langchain.document_loaders.chromium import AsyncChromiumLoader
+from langchain_community.document_loaders.chromium import AsyncChromiumLoader
 from langchain.text_splitter import CharacterTextSplitter
 
 

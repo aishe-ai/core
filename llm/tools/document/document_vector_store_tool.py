@@ -4,7 +4,7 @@ import json
 from dotenv import load_dotenv
 
 from langchain.tools import tool
-from langchain.document_loaders import (
+from langchain_community.document_loaders import (
     Docx2txtLoader,
     PyPDFLoader,
     UnstructuredFileLoader,
@@ -14,7 +14,7 @@ from langchain.text_splitter import (
 )
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 from data_models.models import VectorStoreDocumentTool
 from llm.vector_store import new_vector_store
