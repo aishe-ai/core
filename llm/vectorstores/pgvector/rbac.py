@@ -17,8 +17,8 @@ from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
-from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
+from llm.config import HAIKU_CHAT_MODEL
 
 from data_model import (
     get_memberships_by_email,
@@ -137,7 +137,7 @@ memory = ConversationBufferMemory(
     return_messages=True,
 )
 
-llm = ChatOpenAI(model_name="gpt-4", temperature=1)
+llm = HAIKU_CHAT_MODEL
 # result = llm.invoke("hello")
 # print(result)
 

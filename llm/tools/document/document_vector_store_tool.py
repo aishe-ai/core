@@ -14,7 +14,7 @@ from langchain.text_splitter import (
 )
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain_openai import ChatOpenAI
+
 
 from data_models.models import VectorStoreDocumentTool
 from llm.vector_store import new_vector_store
@@ -25,6 +25,7 @@ from slack_sdk.errors import SlackApiError
 
 from data_models.models import *
 from llm.memory.slack_memory import slack_to_llm_memory
+from llm.config import HAIKU_CHAT_MODEL
 from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK
 
 load_dotenv()
@@ -73,7 +74,7 @@ def document_vector_store_tool(
     )
 
     # https://github.com/hwchase17/chat-your-data
-    llm = ChatOpenAI(model_name="gpt-4", temperature=1)
+    llm = HAIKU_CHAT_MODEL
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,
         retriever=vector_store.as_retriever(),

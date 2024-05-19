@@ -14,6 +14,7 @@ from langchain.text_splitter import CharacterTextSplitter
 
 from data_models.models import WebpageToolParams
 from llm.vector_store import new_vector_store
+from llm.config import HAIKU_CHAT_MODEL
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ def webpage_tool(prompt: str, url: str) -> str:
 
     vector_store = new_vector_store(docs)
 
-    llm = ChatOpenAI(model_name="gpt-4", temperature=0.4)
+    llm = HAIKU_CHAT_MODEL
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",

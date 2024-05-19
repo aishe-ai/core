@@ -2,7 +2,6 @@ import os
 import json
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.tools import tool
 from langchain_community.document_loaders import ConfluenceLoader
@@ -12,6 +11,7 @@ from langchain.schema import SystemMessage
 
 from data_models.models import ConfluenceToolParams
 from llm.vector_store import new_vector_store
+from llm.config import HAIKU_CHAT_MODEL
 
 load_dotenv()
 
@@ -52,7 +52,7 @@ def confluence_tool(
     splitted_documents = splitter.split_documents(documents)
     vector_store = new_vector_store(splitted_documents)
 
-    llm = ChatOpenAI(model_name="gpt-4", temperature=0.4)
+    llm = HAIKU_CHAT_MODEL
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",

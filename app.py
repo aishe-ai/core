@@ -34,7 +34,6 @@ load_dotenv()
 SLACK_BOT_OAUTH_TOKEN = os.getenv("SLACK_BOT_OAUTH_TOKEN")
 SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
-
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 
 app = FastAPI()

@@ -2,7 +2,6 @@ import json
 import shutil
 import re
 
-from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.tools import tool
 from langchain.text_splitter import CharacterTextSplitter
@@ -15,6 +14,7 @@ from langchain_community.document_loaders import GitLoader
 from data_models.models import GitToolParams
 from llm.vector_store import new_vector_store
 from data_models.constants import ALLOWED_FILE_EXTENSIONS
+from llm.config import HAIKU_CHAT_MODEL
 
 
 @tool("git search", return_direct=True, args_schema=GitToolParams)
@@ -37,7 +37,7 @@ def git_tool(prompt: str, url: str, project_name: str, branch_name: str) -> str:
 
     shutil.rmtree(folder_path)
 
-    llm = ChatOpenAI(model_name="gpt-4", temperature=1)
+    llm = HAIKU_CHAT_MODEL
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
