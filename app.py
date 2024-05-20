@@ -15,6 +15,8 @@ from slack_sdk import WebClient
 from slack_sdk.signature import SignatureVerifier
 from slack_sdk.errors import SlackApiError
 
+from langfuse.callback import CallbackHandler
+
 
 from llm.agents import new_conversional_agent
 from data_models.models import *
@@ -35,6 +37,9 @@ SLACK_BOT_OAUTH_TOKEN = os.getenv("SLACK_BOT_OAUTH_TOKEN")
 SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
+
+langfuse_handler = CallbackHandler()
+
 
 app = FastAPI()
 
@@ -216,7 +221,7 @@ def download_handler(prompt_parameters, file_url, file_name):
         Assistant:
         """
 
-        conversional_agent.run(input=prompt)
+        conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
 
 
 def start_agent():
@@ -232,7 +237,7 @@ def prompt_handler(prompt_parameters: PromptParameters):
     Human: {prompt_parameters.prompt}
     Assistant:
     """
-    response = conversional_agent.run(input=prompt)
+    response = conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
     slack_response_handler(prompt_parameters, response)
 
 
