@@ -34,18 +34,16 @@ def image_to_base64(image_path):
 
 
 @tool("image operations", return_direct=True, args_schema=ImageEditingTool)
-def image_operations_tool(prompt: str, slack_channel_id: str, url: str) -> str:
+def image_operations_tool(prompt: str, url: str) -> str:
     """
-    Use this tool for operation on images from a prompt.
+    Use this tool for analysing/describing an images from/for a prompt. Dont use for image creation!
     """
-
     image_url = ""
     if not os.path.exists(url):
         image_url = url
     else:
         image_url = "data:image/jpeg;base64," + image_to_base64(url)
 
-    print(image_url)
     try:
         gpt_4_response = OPENAI_CLIENT.chat.completions.create(
             model="gpt-4-vision-preview",
@@ -64,14 +62,14 @@ def image_operations_tool(prompt: str, slack_channel_id: str, url: str) -> str:
                 }
             ],
         )
-        data = gpt_4_response.choices
+        data = gpt_4_response.choices[0]
         blocks = [
             {
                 "type": "section",
                 "block_id": "sectionBlockOnlyPlainText",
                 "text": {
                     "type": "plain_text",
-                    "text": data[0]["message"]["content"],
+                    "text": data.message.content,
                     "emoji": True,
                 },
             }

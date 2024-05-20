@@ -12,8 +12,7 @@ from langchain.schema import SystemMessage
 from llm.tools.webpage.webpage_tool import webpage_tool
 from llm.tools.deepl.file_translation_tool import file_translation_tool
 from llm.tools.image.image_generation_tool import image_generation_tool
-
-# from llm.tools.image.image_operations_tool import image_operations_tool
+from llm.tools.image.image_operations_tool import image_operations_tool
 from llm.config import GPT_3_5_CHAT_MODEL
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -36,13 +35,14 @@ def new_conversional_agent(chat_model=GPT_3_5_CHAT_MODEL, memory=EMPTY_MEMORY):
         webpage_tool,
         file_translation_tool,
         image_generation_tool,
-        # image_operations_tool,
+        image_operations_tool,
     ]
 
     system_message = f"""
         You are a chat bot which helps the user find answers to his question.
         !You have to answer in the language of the user messages, default is always german!
         You have access to different tools like image generation, so if the user wants you to generate a image use the regarding tool!
+        You have to return the valid tool params, based on the input and function calling schemas.!
         Use all past messages within your memory for context.
     """
     system_message = SystemMessage(content=system_message)

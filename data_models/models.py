@@ -75,9 +75,6 @@ class VectorStoreDocumentTool(BaseModel):
 
 
 class ImageCreationTool(BaseModel):
-    slack_channel_id: str = Field(
-        description="Source slack channel, provided by default value"
-    )
     prompt: str = Field(description="Prompt from user")
 
 
@@ -85,7 +82,4 @@ class ImageEditingTool(BaseModel):
     url: str = Field(
         "Url of an image provided by user, if not provided check for downloaded image in downloads/ within this project"
     )
-    slack_channel_id: str = Field(
-        description="Source slack channel, provided by default value"
-    )
-    prompt: str = Field(description="Prompt from user")
+    prompt: str = Field(description="Prompt from user, like describe image. You have return the exact prompt the user, default to 'Describe' if non was given/extractable!", default="Describe image!")
