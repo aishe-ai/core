@@ -20,6 +20,7 @@ EXAMPLE_PROMPTS = [
     "- Confluence:\n\t\t\t- Summarize the page: https://...... \n\n"
     "- Git repos:\n\t\t\t- In which language is this project written: https://github.com/martinmimigames/little-music-player?\n\t\t\t- What does HWListener in this project https://github.com/martinmimigames/little-music-player do?\n\t\t\t- What is the difference of the m3u branch in this project: https://github.com/martinmimigames/little-music-player?\n\n",
     "- Image Generation with DALL-E:\n\t\t\t- Create an image of a space mountain",
+    "- Multi Modal:\n\t\t\t- Describe this image: https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nat[…].jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
 ]
 
 # Tuple of top 50+ most used programming language file extensions, including all Elixir extensions
