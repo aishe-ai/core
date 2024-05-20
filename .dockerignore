@@ -1,9 +1,37 @@
+# Ignore .env files and similar environment files
 .env
-*.pyc
-*.pyo
 
+# Ignore other common sensitive files
+*.pem
+*.key
+*.cert
+
+# Ignore version control directories
 .git/
-downloads/
-__pycache__
+.gitignore
+.svn/
+.hg/
 
+# Ignore common backup files
+*~
+*.bak
+*.tmp
+*.swp
 
+# Ignore log files and directories
+logs/
+*.log
+
+# Ignore node modules
+node_modules/
+
+# Ignore build output directories
+dist/
+build/
+out/
+.venv
+
+# Ignore IDE specific files and directories
+.vscode/
+.idea/
+*.sublime-workspace
