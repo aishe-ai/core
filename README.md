@@ -21,6 +21,7 @@
 8. Setup langsmith in .env
 8. Start fastapi: `uvicorn app:app --reload`
 9. Start ngrok: `ngrok http --domain=DOMAIN 8000`, domain must be the same as the bot creation
+10. Setup [langfuse](https://github.com/langfuse/langfuse?tab=readme-ov-file#get-started) and its needed envs
 
 ## Issues
 - Browser is not starting for webscraping, for example within the webpage_tool:
