@@ -216,7 +216,7 @@ def download_handler(prompt_parameters, file_url, file_name):
         Assistant:
         """
 
-        response = conversional_agent.run(input=prompt)
+        conversional_agent.run(input=prompt)
 
 
 def start_agent():

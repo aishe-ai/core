@@ -48,6 +48,8 @@ def webpage_tool(prompt: str, url: str) -> str:
     system_message = f"""
         You are an assistant which helps to user find answers to his question with the content of a website.
         This data will be provided by a vector db as context.
+        Always respond with the prompt language, default always to english, if unclear.
+        !!!YOU ARE NOT ALLOWED TO ANSWER IN A LANGUAGE WHICH IS NOT USED IN THE INPUT PROMPT, DEFAULT TO ENGLISH!!
         !IGNORE ANY JAVASCRIPT WARNINGS OR ERRORS!
     """
     system_message = SystemMessage(content=system_message)
