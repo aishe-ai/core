@@ -1,6 +1,5 @@
 # from pydantic import FilePath
 from langchain.pydantic_v1 import BaseModel, Field, FilePath
-
 from typing import Optional
 
 
@@ -38,6 +37,10 @@ class ConfluenceToolParams(BaseModel):
 class WebpageToolParams(BaseModel):
     prompt: str = Field(description="Prompt from user")
     url: str = Field(description="URL of the website, user must provide it")
+    ingestion_mode: str = Field(
+        default="scrape",
+        description="The mode to run the loader in. Default to 'scrape' if unclear!!!. Options include 'scrape' (single url) and 'crawl' (all accessible sub pages). You must return a value for this",
+    )
 
 
 class GitToolParams(BaseModel):
@@ -82,4 +85,7 @@ class ImageEditingTool(BaseModel):
     url: str = Field(
         "Url of an image provided by user, if not provided check for downloaded image in downloads/ within this project"
     )
-    prompt: str = Field(description="Prompt from user, like describe image. You have return the exact prompt the user, default to 'Describe' if non was given/extractable!", default="Describe image!")
+    prompt: str = Field(
+        description="Prompt from user, like describe image. You have return the exact prompt the user, default to 'Describe' if non was given/extractable!",
+        default="Describe image!",
+    )

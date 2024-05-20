@@ -10,40 +10,36 @@ from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 from langchain_community.document_loaders.chromium import AsyncChromiumLoader
 from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders import FireCrawlLoader
+
+from langchain_community.chat_models import ChatOpenAI
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
 
 from data_models.models import WebpageToolParams
 from llm.vector_store import new_vector_store
 from llm.config import HAIKU_CHAT_MODEL
 
+
 load_dotenv()
+
+FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
 
 @tool("webpage content search", return_direct=True, args_schema=WebpageToolParams)
-def webpage_tool(prompt: str, url: str) -> str:
+def webpage_tool(prompt: str, url: str, ingestion_mode: str = "scrape") -> str:
     """
     Use this tool for handling a prompt regarding a webpage content.
     Prefer this over the requests tool when you want to make a get request
     """
-    print(prompt, url)
 
-    loader = AsyncChromiumLoader([url])
-
-    text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=2000, chunk_overlap=100
+    fire_loader = FireCrawlLoader(
+        api_key=FIRECRAWL_API_KEY, url=url, mode=ingestion_mode
     )
-    docs = loader.load_and_split(text_splitter)
 
-    vector_store = new_vector_store(docs)
-
-    llm = HAIKU_CHAT_MODEL
-
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        input_key="question",
-        output_key="answer",
-        return_messages=True,
-    )
+    fire_docs = fire_loader.load()
 
     system_message = f"""
         You are an assistant which helps to user find answers to his question with the content of a website.
@@ -51,17 +47,24 @@ def webpage_tool(prompt: str, url: str) -> str:
         Always respond with the prompt language, default always to english, if unclear.
         !!!YOU ARE NOT ALLOWED TO ANSWER IN A LANGUAGE WHICH IS NOT USED IN THE INPUT PROMPT, DEFAULT TO ENGLISH!!
         !IGNORE ANY JAVASCRIPT WARNINGS OR ERRORS!
+        Use the below context for answer the user prompt:
+        {{context}}
     """
-    system_message = SystemMessage(content=system_message)
 
-    memory.chat_memory.add_message(system_message)
-    conversation_qa_chain = ConversationalRetrievalChain.from_llm(
-        llm,
-        retriever=vector_store.as_retriever(),
-        memory=memory,
-        return_source_documents=True,
+    llm = HAIKU_CHAT_MODEL
+
+    messages = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                system_message,
+            ),
+            ("user", prompt),
+        ]
     )
-    conversation_result = conversation_qa_chain({"question": prompt})
+    chain = create_stuff_documents_chain(llm, messages)
+
+    conversation_result = chain.invoke({"context": fire_docs})
 
     link_blocks = list()
     link_blocks.append(
@@ -69,7 +72,7 @@ def webpage_tool(prompt: str, url: str) -> str:
             "type": "section",
             "text": {
                 "type": "plain_text",
-                "text": conversation_result["chat_history"][-1].content,
+                "text": conversation_result,
                 "emoji": True,
             },
         }
