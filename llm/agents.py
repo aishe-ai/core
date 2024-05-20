@@ -6,20 +6,21 @@ from langchain.agents import (
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 
-from llm.tools.confluence.confluence_tool import confluence_tool
+# from llm.tools.confluence.confluence_tool import confluence_tool
+# from llm.tools.document.document_vector_store_tool import document_vector_store_tool
+# from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.webpage.webpage_tool import webpage_tool
-from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.deepl.file_translation_tool import file_translation_tool
-from llm.tools.document.document_vector_store_tool import document_vector_store_tool
 from llm.tools.image.image_generation_tool import image_generation_tool
-from llm.tools.image.image_operations_tool import image_operations_tool
-from llm.config import HAIKU_CHAT_MODEL
+
+# from llm.tools.image.image_operations_tool import image_operations_tool
+from llm.config import GPT_3_5_CHAT_MODEL
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
 
 # prompt_parameters: PromptParameters
-def new_conversional_agent(chat_model=HAIKU_CHAT_MODEL, memory=EMPTY_MEMORY):
+def new_conversional_agent(chat_model=GPT_3_5_CHAT_MODEL, memory=EMPTY_MEMORY):
     tools = load_tools(
         # build in tools
         [
@@ -29,19 +30,19 @@ def new_conversional_agent(chat_model=HAIKU_CHAT_MODEL, memory=EMPTY_MEMORY):
         ],
         llm=chat_model,
     ) + [
-        confluence_tool,
+        # confluence_tool,
+        # document_vector_store_tool,
+        # git_tool,
         webpage_tool,
-        git_tool,
         file_translation_tool,
-        document_vector_store_tool,
         image_generation_tool,
-        image_operations_tool,
+        # image_operations_tool,
     ]
 
     system_message = f"""
         You are a chat bot which helps the user find answers to his question.
         !You have to answer in the language of the user messages, default is always german!
-        !For internal action you are allowed to use english, like function calling!
+        You have access to different tools like image generation, so if the user wants you to generate a image use the regarding tool!
         Use all past messages within your memory for context.
     """
     system_message = SystemMessage(content=system_message)

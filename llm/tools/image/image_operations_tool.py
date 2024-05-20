@@ -1,9 +1,8 @@
 import os
 import json
-import openai
 import base64
-import requests
 
+from openai import OpenAI
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -15,14 +14,12 @@ from data_models.models import ImageEditingTool
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 SLACK_BOT_OAUTH_TOKEN = os.getenv("SLACK_BOT_OAUTH_TOKEN")
 SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 
-DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
-DEEPL_API_URL = os.getenv("DEEPL_API_URL")
+OPENAI_CLIENT = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def send_error_notification(error_message, slack_channel_id):
@@ -50,7 +47,7 @@ def image_operations_tool(prompt: str, slack_channel_id: str, url: str) -> str:
 
     print(image_url)
     try:
-        gpt_4_response = openai.ChatCompletion.create(
+        gpt_4_response = OPENAI_CLIENT.chat.completions.create(
             model="gpt-4-vision-preview",
             messages=[
                 {
@@ -67,7 +64,7 @@ def image_operations_tool(prompt: str, slack_channel_id: str, url: str) -> str:
                 }
             ],
         )
-        data = gpt_4_response["choices"]
+        data = gpt_4_response.choices
         blocks = [
             {
                 "type": "section",
