@@ -16,19 +16,23 @@ services:
       - app_network  # Assign the network to the postgres service
 
   core:
-    image: europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest
-    command: uvicorn app:app --reload --host 0.0.0.0 --port 80
-    working_dir: /app  # Set the working directory to /app
+    image: aishe.ai/core:latest
+    # image: europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest
+    working_dir: /code/app  # Set the working directory to /app
     env_file:
       - .env  # Specify the path to your environment file here
     ports:
-      - "8000:80"
-      # - "80:80"
-    networks:
-      - app_network
+      - "8888:8888"
     volumes:
-      - .:/app  # Mount the current directory into the container
-  
+      - .:/app
+    labels:
+      # - "traefik.enable=true"
+      # - "traefik.http.services.core.loadbalancer.server.port=8888"
+      # - "traefik.http.routers.core.rule=Host(``)"
+      # - "traefik.http.routers.core.entrypoints=websecure"
+      # - "traefik.http.routers.core.tls.certresolver=myresolver"
+
+
   ngrok:
     image: ngrok/ngrok:latest
     env_file:

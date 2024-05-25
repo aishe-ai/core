@@ -45,4 +45,4 @@ ENV LD_LIBRARY_PATH="/usr/local/lib"
 COPY . /code/app
 
 # Run application
-CMD uvicorn app:app --proxy-headers --host 0.0.0.0 --port 80 --workers $(nproc)
+CMD uvicorn app:app --proxy-headers --host 0.0.0.0 --port 8888 --workers $(nproc)
