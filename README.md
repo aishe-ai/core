@@ -7,7 +7,7 @@
 6. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
 7. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
 8. Setup langsmith in .env
-8. Start everything as a docker compose with code hot reload: `docker compose --env-file .env -p aishe_ai up`
+8. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up`
 
 ### Conventional
 0. Copy .env.example to .env and modify content
