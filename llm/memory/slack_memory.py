@@ -6,7 +6,7 @@ from data_models.models import PromptParameters
 from data_models.constants import LOADING_INDICATOR, CUSTOM_SLACK_COMMANDS
 
 
-def slack_to_llm_memory(slack_client, prompt_parameters: PromptParameters, limit=1):
+def slack_to_llm_memory(slack_client, prompt_parameters: PromptParameters, limit=5):
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         # input_key="input",
