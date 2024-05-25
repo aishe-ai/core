@@ -27,7 +27,7 @@ fake_useragent==1.5.1
 black==24.4.2
 numexpr==2.10.0
 pgvector==0.2.5
-pysqlite3-binary==0.5.2.post3
+# pysqlite3-binary==0.5.2.post3
 psycopg2-binary==2.9.9
 psycopg2==2.9.9
 langchain-openai==0.1.7
