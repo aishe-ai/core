@@ -44,14 +44,7 @@ class DistanceStrategy(str, enum.Enum):
 DEFAULT_DISTANCE_STRATEGY = DistanceStrategy.COSINE
 _LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
 
-CONNECTION_STRING = PGVector.connection_string_from_db_params(
-    driver=os.environ.get("PGVECTOR_DRIVER", "psycopg2"),
-    host=os.environ.get("PGVECTOR_HOST", "localhost"),
-    port=int(os.environ.get("PGVECTOR_PORT", "5432")),
-    database=os.environ.get("PGVECTOR_DATABASE", "aisheAI"),
-    user=os.environ.get("POSTGRES_USER", "aisheAI"),
-    password=os.environ.get("POSTGRES_PASSWORD", "password"),
-)
+CONNECTION_STRING = f"postgresql://{os.environ.get('POSTGRES_USER', 'aisheAI')}:{os.environ.get('POSTGRES_PASSWORD', 'password')}@{os.environ.get('PGVECTOR_HOST', 'localhost')}/{os.environ.get('PGVECTOR_DATABASE', 'aisheAI')}"
 
 
 class RBACVector(PGVector):

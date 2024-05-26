@@ -47,10 +47,11 @@ CONNECTION_STRING = f"postgresql://{os.environ.get('POSTGRES_USER', 'aisheAI')}:
 
 
 class NonRBACVectorStore(PGVector):
+
     def __init__(
         self,
-        connection_string: str,
-        embedding_function: Embeddings,
+        connection_string: str = CONNECTION_STRING,
+        embedding_function: Embeddings = OpenAIEmbeddings(),
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
         collection_metadata: Optional[dict] = None,
         distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
@@ -122,10 +123,7 @@ class NonRBACVectorStore(PGVector):
 
 if __name__ == "__main__":
     print(CONNECTION_STRING)
-    non_rbac_vector_store = NonRBACVectorStore(
-        connection_string=CONNECTION_STRING,
-        embedding_function=OpenAIEmbeddings(),
-    )
+    non_rbac_vector_store = NonRBACVectorStore()
 
     prompt = "Which person was the oldest in the given context?"
 
@@ -137,14 +135,10 @@ if __name__ == "__main__":
     )
 
     # llm = HAIKU_CHAT_MODEL
-    llm = GPT4_CHAT_MODEL
-    # llm = GPT_3_5_CHAT_MODEL
-
-    # result = llm.invoke("hello")
-    # print(result)
+    # llm = GPT4_CHAT_MODEL
+    llm = GPT_3_5_CHAT_MODEL
 
     retriever = non_rbac_vector_store.as_retriever()
-    retriever.search_kwargs = {"filter": {"user": "testmember@example.com"}}
 
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,

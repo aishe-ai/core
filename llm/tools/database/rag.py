@@ -13,6 +13,7 @@ from langchain.schema import SystemMessage
 from llm.config import GPT_3_5_CHAT_MODEL
 from data_models.models import PgVectorToolParams
 from llm.vector_store import new_pgvector_store
+from llm.vectorstores.pgvector.non_rbac import NonRBACVectorStore
 
 load_dotenv()
 
@@ -26,9 +27,6 @@ def pgvector_tool(prompt: str) -> str:
     Current knowlegde within the db:
     - Titanic passenger/crew information
     """
-
-    # Initialize the pgvector store
-    vector_store = new_pgvector_store()
 
     llm = GPT_3_5_CHAT_MODEL
 
@@ -49,7 +47,7 @@ def pgvector_tool(prompt: str) -> str:
     memory.chat_memory.add_message(system_message)
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,
-        retriever=vectorstore.as_retriever(),
+        retriever=NonRBACVectorStore().as_retriever(),
         memory=memory,
         return_source_documents=True,
     )
