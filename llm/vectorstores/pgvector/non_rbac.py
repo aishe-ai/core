@@ -26,8 +26,7 @@ HAIKU_CHAT_MODEL = ChatAnthropic(model_name="claude-3-haiku-20240307", temperatu
 GPT4_CHAT_MODEL = ChatOpenAI(model_name="gpt-4", temperature=0.4)
 GPT_3_5_CHAT_MODEL = ChatOpenAI(model_name="gpt-3.5-turbo-0125", temperature=0.4)
 
-
-from data_model import (
+from llm.vectorstores.pgvector.data_model import (
     get_nearest_docs,
 )
 

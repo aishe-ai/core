@@ -12,7 +12,6 @@ from langchain.schema import SystemMessage
 
 from llm.config import GPT_3_5_CHAT_MODEL
 from data_models.models import PgVectorToolParams
-from llm.vector_store import new_pgvector_store
 from llm.vectorstores.pgvector.non_rbac import NonRBACVectorStore
 
 load_dotenv()
