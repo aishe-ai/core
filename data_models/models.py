@@ -89,3 +89,7 @@ class ImageEditingTool(BaseModel):
         description="Prompt from user, like describe image. You have return the exact prompt the user, default to 'Describe' if non was given/extractable!",
         default="Describe image!",
     )
+
+
+class PgVectorToolParams(BaseModel):
+    prompt: str = Field(description="Prompt from user")
