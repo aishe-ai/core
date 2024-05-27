@@ -1,6 +1,7 @@
 # aishe core
 
 ## Setup/Deployment
+Python 3.9 needed!
 ### Docker Compose
 0. Copy .env.example to .env and modify content
 4. Create ngrok domain

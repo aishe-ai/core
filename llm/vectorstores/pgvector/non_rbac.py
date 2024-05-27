@@ -10,21 +10,19 @@ from typing import (
 )
 
 import sqlalchemy
-from sqlmodel import Session
+from sqlmodel import create_engine, SQLModel, Session
 
-from langchain_community.embeddings.base import Embeddings
+from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
-from llm.config import GPT_3_5_CHAT_MODEL, CONNECTION_STRING
-
-from data_model import (
-    get_memberships_by_email,
-    get_nearest_rbac_docs,
+from llm.vectorstores.pgvector.data_model import (
+    get_nearest_docs,
 )
+from llm.config import GPT_3_5_CHAT_MODEL, CONNECTION_STRING
 
 
 class DistanceStrategy(str, enum.Enum):
@@ -39,11 +37,12 @@ DEFAULT_DISTANCE_STRATEGY = DistanceStrategy.COSINE
 _LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
 
 
-class RBACVector(PGVector):
+class NonRBACVectorStore(PGVector):
+
     def __init__(
         self,
-        connection_string: str,
-        embedding_function: Embeddings,
+        connection_string: str = CONNECTION_STRING,
+        embedding_function: Embeddings = OpenAIEmbeddings(),
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
         collection_metadata: Optional[dict] = None,
         distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
@@ -66,7 +65,7 @@ class RBACVector(PGVector):
         self._conn = self.connect()
 
     def connect(self) -> sqlalchemy.engine.Connection:
-        engine = sqlalchemy.create_engine(self.connection_string)
+        engine = create_engine(self.connection_string)
         conn = engine.connect()
         return conn
 
@@ -99,29 +98,24 @@ class RBACVector(PGVector):
         k: int = 4,
         filter: Optional[dict] = None,
     ) -> List[Tuple[Document, float]]:
-        member_email = filter["user"]
-        embedding = self.embedding_function.embed_query(text=query)
+        reference_embedding = self.embedding_function.embed_query(text=query)
 
         docs = []
         with Session(self._conn) as session:
-            memberships = get_memberships_by_email(session, member_email)
-            print(query, member_email, len(memberships))
+            # print(query, filter)
 
-            docs = get_nearest_rbac_docs(session, member_email, embedding)
-        print(docs)
+            docs = get_nearest_docs(session, reference_embedding)
+        print(len(docs))
         return docs
 
 
-# # Add write functionality as needed
+# Add write functionality as needed
 
 if __name__ == "__main__":
-    # This block will only run if the script is executed directly (not imported as a module)
-    rbac_vector_store = RBACVector(
-        connection_string=CONNECTION_STRING,
-        embedding_function=OpenAIEmbeddings(),
-    )
+    print(CONNECTION_STRING)
+    non_rbac_vector_store = NonRBACVectorStore()
 
-    prompt = "Summerize given context to you"
+    prompt = "Which person was the oldest in the given context?"
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -130,12 +124,9 @@ if __name__ == "__main__":
         return_messages=True,
     )
 
-    llm = HAIKU_CHAT_MODEL
-    # result = llm.invoke("hello")
-    # print(result)
+    llm = GPT_3_5_CHAT_MODEL
 
-    retriever = rbac_vector_store.as_retriever()
-    retriever.search_kwargs = {"filter": {"user": "testmember@example.com"}}
+    retriever = non_rbac_vector_store.as_retriever()
 
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,

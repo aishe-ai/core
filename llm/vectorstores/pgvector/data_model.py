@@ -1,4 +1,5 @@
 import uuid
+import os
 
 # needed, dont ask me why
 import uuid as uuid_pkg
@@ -14,6 +15,8 @@ from sqlalchemy import Column, ForeignKey, Index, text
 from pgvector.sqlalchemy import Vector
 
 from langchain.docstore.document import Document
+
+NON_RBAC_TABLE_NAME = os.environ.get("NON_RBAC_TABLE_NAME", "document")
 
 
 class Organization(SQLModel, table=True):
@@ -186,7 +189,7 @@ def get_memberships_by_email(db: Session, member_email: str) -> List[Membership]
     ).all()
 
 
-def get_nearest_docs(
+def get_nearest_rbac_docs(
     db: Session, member_email: str, reference_embedding: List[float], k: int = 0.8
 ):
     # Query to get memberships and datasources for a member
@@ -228,4 +231,38 @@ def get_nearest_docs(
                     # {"source": "downloads/meetups.pdf", "page": 0}
                 )
                 docs.append(doc)
+    return docs
+
+
+def get_nearest_docs(db: Session, reference_embedding: List[float], k: int = 0.8):
+    # Query to get memberships and datasources for a member
+    docs = []
+
+    # Flatten the reference_embedding into a comma-separated string and cast it as a PostgreSQL vector type
+    reference_embeddings_str = ",".join(map(str, reference_embedding))
+    reference_array_str = f"ARRAY[{reference_embeddings_str}]::vector"
+
+    # Here we insert the reference embedding string and limit into the SQL statement
+    # We use 1 - (embeddings <=> reference_array_str) to calculate cosine similarity
+    query = text(
+        f"SELECT page_content, context_data FROM {NON_RBAC_TABLE_NAME} "
+        f"WHERE (1 - (embeddings <=> {reference_array_str})) < :k "
+        f"LIMIT 20"
+    )
+
+    results = db.execute(
+        query,
+        {
+            "k": k,
+        },
+    ).fetchall()
+
+    for row in results:
+        doc = Document(
+            page_content=row[0],
+            metadata=row[1],
+            # {"source": "downloads/meetups.pdf", "page": 0}
+        )
+        docs.append(doc)
+
     return docs

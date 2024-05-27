@@ -1,5 +1,3 @@
-version: '3.1'
-
 services:
   postgres:
     build:
@@ -25,7 +23,7 @@ services:
       - "8888:8888"
     volumes:
       - .:/app
-    labels:
+    # labels:
       # - "traefik.enable=true"
       # - "traefik.http.services.core.loadbalancer.server.port=8888"
       # - "traefik.http.routers.core.rule=Host(``)"
