@@ -18,19 +18,13 @@ from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
 
-from llm.config import HAIKU_CHAT_MODEL
+from llm.config import GPT_3_5_CHAT_MODEL, CONNECTION_STRING
 
 from data_model import (
     get_memberships_by_email,
     get_nearest_rbac_docs,
 )
-
-HAIKU_CHAT_MODEL = ChatAnthropic(model_name="claude-3-haiku-20240307", temperature=0.4)
-GPT4_CHAT_MODEL = ChatOpenAI(model_name="gpt-4", temperature=0.4)
-GPT_3_5_CHAT_MODEL = ChatOpenAI(model_name="gpt-3.5-turbo-0125", temperature=0.4)
 
 
 class DistanceStrategy(str, enum.Enum):
@@ -43,8 +37,6 @@ class DistanceStrategy(str, enum.Enum):
 
 DEFAULT_DISTANCE_STRATEGY = DistanceStrategy.COSINE
 _LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
-
-CONNECTION_STRING = f"postgresql://{os.environ.get('POSTGRES_USER', 'aisheAI')}:{os.environ.get('POSTGRES_PASSWORD', 'password')}@{os.environ.get('PGVECTOR_HOST', 'localhost')}/{os.environ.get('PGVECTOR_DATABASE', 'aisheAI')}"
 
 
 class RBACVector(PGVector):
