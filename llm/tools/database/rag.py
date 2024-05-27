@@ -7,7 +7,6 @@ from langchain.tools import tool
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 
-
 from llm.config import GPT_3_5_CHAT_MODEL
 from data_models.models import PgVectorToolParams
 from llm.vectorstores.pgvector.non_rbac import NonRBACVectorStore
@@ -50,10 +49,7 @@ def pgvector_tool(prompt: str) -> str:
     )
     conversation_result = conversation_qa_chain({"question": prompt})
 
-    link_blocks = list(
-        map(source_object_to_slack_block, conversation_result["source_documents"])
-    )
-    link_blocks.append(
+    link_blocks = [
         {
             "type": "section",
             "text": {
@@ -62,19 +58,5 @@ def pgvector_tool(prompt: str) -> str:
                 "emoji": True,
             },
         }
-    )
+    ]
     return json.dumps({"slack_response": link_blocks})
-
-
-def source_object_to_slack_block(source_document):
-    return {
-        "type": "section",
-        "text": {"type": "mrkdwn", "text": source_document.metadata["title"]},
-        "accessory": {
-            "type": "button",
-            "text": {"type": "plain_text", "text": "Link", "emoji": True},
-            "value": "test1",
-            "url": source_document.metadata["source"],
-            "action_id": "button-action",
-        },
-    }

@@ -51,14 +51,13 @@ def document_vector_store_tool(
 
     file_extension = file_path.suffix
 
-    match file_extension:
-        case ".docx":
-            loader = Docx2txtLoader(str(file_path))
-        case ".pdf":
-            loader = PyPDFLoader(str(file_path))
-        case other:
-            print(f"Using general purpose loader for {other}")
-            loader = UnstructuredFileLoader(str(file_path))
+    if file_extension == ".docx":
+        loader = Docx2txtLoader(str(file_path))
+    elif file_extension == ".pdf":
+        loader = PyPDFLoader(str(file_path))
+    else:
+        print(f"Using general purpose loader for {file_extension}")
+        loader = UnstructuredFileLoader(str(file_path))
 
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=2000, chunk_overlap=1000

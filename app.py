@@ -243,16 +243,16 @@ def prompt_handler(prompt_parameters: PromptParameters):
 
 def history_handler(prompt_parameters):
     memory = None
-    match prompt_parameters.source.name:
-        case "slack":
-            memory = slack_to_llm_memory(
-                slack_client=SLACK_CLIENT, prompt_parameters=prompt_parameters
-            )
-        case other:
-            logger.error(
-                "Not matching event source found for memory conversion",
-                prompt_parameters.source.name,
-            )
+
+    if prompt_parameters.source.name == "slack":
+        memory = slack_to_llm_memory(
+            slack_client=SLACK_CLIENT, prompt_parameters=prompt_parameters
+        )
+    else:
+        logger.error(
+            "Not matching event source found for memory conversion",
+            prompt_parameters.source.name,
+        )
     logger.info(f"Handling basic prompt: {prompt_parameters.prompt} | {memory}")
 
     chat_history = ""
@@ -274,24 +274,16 @@ def slack_response_handler(prompt_parameters: PromptParameters, response):
         if "action_input" in response:
             string_handler(prompt_parameters, response["action_input"])
         else:
-            try:
-                SLACK_CLIENT.chat_postMessage(
-                    channel=prompt_parameters.source.id,
-                    text="response",
-                    blocks=response["slack_response"],
-                )
-            except SlackApiError as e:
-                # You will get a SlackApiError if "ok" is False
-                assert e.response["ok"] is False
-                assert e.response[
-                    "error"
-                ]  # str like 'invalid_auth', 'channel_not_found'
-                print(f"Got an error: {e.response['error']}")
-    except:
+            SLACK_CLIENT.chat_postMessage(
+                channel=prompt_parameters.source.id,
+                text="response",
+                blocks=response["slack_response"],
+            )
+    except Exception as error:
         if isinstance(response, str):
             string_handler(prompt_parameters, response)
         else:
-            print(f"Weird answer from agent: {response}")
+            print(f"Error while sending slack reponse: {response}, {str(error)}")
 
 
 def string_handler(prompt_parameters: PromptParameters, response):

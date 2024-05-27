@@ -65,7 +65,6 @@ class NonRBACVectorStore(PGVector):
         self._conn = self.connect()
 
     def connect(self) -> sqlalchemy.engine.Connection:
-        # engine = sqlalchemy.create_engine(self.connection_string)
         engine = create_engine(self.connection_string)
         conn = engine.connect()
         return conn
