@@ -2,13 +2,18 @@
 
 ## Setup/Deployment
 Python 3.9 needed!
+
+1. Install python 3.9 or set version to it
+2. Create new venv: `python3.9 -m venv .venv`
+3. Activate venv: `source .venv/bin/activate`
+
 ### Docker Compose
 0. Copy .env.example to .env and modify content
-4. Create ngrok domain
-6. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
-7. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
-8. Setup langsmith in .env
-8. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up`
+2. Create ngrok domain
+3. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
+4. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
+5. Setup langsmith in .env
+6. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up`
 
 ### Conventional
 0. Copy .env.example to .env and modify content
@@ -20,7 +25,7 @@ Python 3.9 needed!
 6. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
 7. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
 8. Setup langsmith in .env
-8. Start fastapi: `uvicorn app:app --reload`
+8. Start fastapi: `uvicorn app:app --reload` or `python3.9 -m uvicorn app:app --reload --port 8888`
 9. Start ngrok: `ngrok http --domain=DOMAIN 8000`, domain must be the same as the bot creation
 10. Setup [langfuse](https://github.com/langfuse/langfuse?tab=readme-ov-file#get-started) and its needed envs
 10. Setup [firecrawl](https://www.firecrawl.dev/) and its needed envs
