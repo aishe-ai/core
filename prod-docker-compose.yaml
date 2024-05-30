@@ -54,7 +54,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.core.loadbalancer.server.port=${CORE_PORT}"
-      - "traefik.http.routers.core.rule=Host(${CORE_DOMAIN})"
+      - "traefik.http.routers.core.rule=Host(`${CORE_DOMAIN}`)"
       - "traefik.http.routers.core.entrypoints=websecure"
       - "traefik.http.routers.core.tls.certresolver=myresolver"
 
@@ -75,7 +75,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.langfuse-server.loadbalancer.server.port=${LANGFUSE_PORT}"
-      - "traefik.http.routers.langfuse-server.rule=Host(${LANGFUSE_DOMAIN})"
+      - "traefik.http.routers.langfuse-server.rule=Host(`${LANGFUSE_DOMAIN}`)"
       - "traefik.http.routers.langfuse-server.entrypoints=websecure"
       - "traefik.http.routers.langfuse-server.tls.certresolver=myresolver"
 
