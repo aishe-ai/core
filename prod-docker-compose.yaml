@@ -1,0 +1,83 @@
+include:
+- ../airbyte-pgvector/docker-compose.yaml
+
+services:
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    command:
+      # - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  database:
+    build:
+      context: https://github.com/pgvector/pgvector.git#master
+      dockerfile: Dockerfile
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    env_file:
+      - .env  # Specify the path to your environment file here
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d  # Mount the local sql directory to the initialization directory
+
+  core:
+    image: ${CORE_IMAGE}
+    working_dir: /code/app  # Set the working directory to /app
+    env_file:
+      - .env  # Specify the path to your environment file here
+    ports:
+      - "${CORE_PORT}:8888"
+    volumes:
+      - .:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.core.loadbalancer.server.port=${CORE_PORT}"
+      - "traefik.http.routers.core.rule=Host(${CORE_DOMAIN})"
+      - "traefik.http.routers.core.entrypoints=websecure"
+      - "traefik.http.routers.core.tls.certresolver=myresolver"
+
+  langfuse-server:
+    image: ${LANGFUSE_IMAGE}
+    depends_on:
+      - database
+      - core
+    ports:
+      - "${LANGFUSE_PORT}:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${PGVECTOR_HOST}:${PGVECTOR_PORT}/postgres
+      - NEXTAUTH_SECRET=mysecret
+      - SALT=mysalt
+      - NEXTAUTH_URL=https://${LANGFUSE_DOMAIN}
+      - TELEMETRY_ENABLED=${TELEMETRY_ENABLED:-false}
+      - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.langfuse-server.loadbalancer.server.port=${LANGFUSE_PORT}"
+      - "traefik.http.routers.langfuse-server.rule=Host(${LANGFUSE_DOMAIN})"
+      - "traefik.http.routers.langfuse-server.entrypoints=websecure"
+      - "traefik.http.routers.langfuse-server.tls.certresolver=myresolver"
+
+volumes:
+  postgres_data:
