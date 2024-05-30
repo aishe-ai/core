@@ -32,6 +32,6 @@ langchain-anthropic==0.1.13
 langfuse==2.32.0
 firecrawl-py==0.0.8
 sqlmodel==0.0.18
-psycopg2=2.9.9
+psycopg2==2.9.9
 psycopg2-binary==2.9.9
 alembic==1.13.1

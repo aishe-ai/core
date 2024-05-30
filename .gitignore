@@ -3,4 +3,5 @@ __pycache__
 downloads/
 tests/
 .venv
-letencrypt
+letencrypt/
+letencrypt/acme.json
