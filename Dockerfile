@@ -1,5 +1,4 @@
-# Use Python 3.11.3 image
-FROM python:3.11.3
+FROM python:3.9
 
 # SQLite3 variables
 ARG SQLITE3_NAME=sqlite-autoconf-3430100
@@ -15,15 +14,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install required packages and download, compile, and install SQLite3
 RUN apt-get update && \
-    apt-get install -y wget build-essential && \
-    wget $SQLITE3_DOWNLOAD_LINK && \
-    tar xvf $SQLITE3_TAR && \
-    cd $SQLITE3_NAME && \
-    ./configure && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf $SQLITE3_NAME*
+    apt-get install -y wget build-essential
+    # && \
+    # wget $SQLITE3_DOWNLOAD_LINK && \
+    # tar xvf $SQLITE3_TAR && \
+    # cd $SQLITE3_NAME && \
+    # ./configure && \
+    # make && \
+    # make install && \
+    # cd .. && \
+    # rm -rf $SQLITE3_NAME*
 
 # Install tesseract-ocr, poppler-utils, and playwright in a separate layer
 RUN apt-get update && \

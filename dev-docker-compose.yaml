@@ -1,0 +1,43 @@
+include:
+  - ../airbyte-pgvector/docker-compose.yaml
+
+services:
+  database:
+    build:
+      context: https://github.com/pgvector/pgvector.git#master
+      dockerfile: Dockerfile
+    env_file:
+      - .env  # Specify the path to your environment file here
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d  # Mount the local sql directory to the initialization directory
+
+  core:
+    image: aishe-ai-core:latest
+    working_dir: /code/app  # Set the working directory to /app
+    env_file:
+      - .env  # Specify the path to your environment file here
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/app
+
+  langfuse-server:
+    image: ghcr.io/langfuse/langfuse:latest
+    depends_on:
+      - database
+      - core
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=postgresql://aisheAI:password@host.docker.internal:5432/postgres
+      - NEXTAUTH_SECRET=mysecret
+      - SALT=mysalt
+      - NEXTAUTH_URL=http://localhost:3001
+      - TELEMETRY_ENABLED=${TELEMETRY_ENABLED:-false}
+      - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+
+volumes:
+  postgres_data:
