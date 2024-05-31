@@ -40,7 +40,7 @@ def new_conversional_agent(chat_model=GPT_3_5_CHAT_MODEL, memory=EMPTY_MEMORY):
         file_translation_tool,
         image_generation_tool,
         image_operations_tool,
-        pgvector_tool,
+        # pgvector_tool,
     ]
 
     current_date = datetime.now(pytz.timezone("Europe/Berlin")).strftime(

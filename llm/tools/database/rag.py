@@ -19,9 +19,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 @tool("pgvector search", args_schema=PgVectorToolParams, return_direct=True)
 def pgvector_tool(prompt: str) -> str:
     """
-    Use this tool for handling a prompt which asks needs retrieval augmented generation(rag).
-    Current knowlegde within the db:
-    - Titanic passenger/crew information
+    Use this tool for handling a prompt which asks needs retrieval augmented generation(rag). Current knowlegde within the db: - Titanic passenger/crew information You are not allowed to use this for google
     """
 
     llm = GPT_3_5_CHAT_MODEL
