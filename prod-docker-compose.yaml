@@ -28,7 +28,7 @@ services:
       - default
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.traefik.rule=Host(`core.atest1.adingil.com`)"
+    #   - "traefik.http.routers.traefik.rule=Host(``)"
     #   - "traefik.http.routers.traefik.entrypoints=websecure"
     #   - "traefik.http.routers.traefik.tls.certresolver=myresolver"
     #   - "traefik.http.routers.traefik.service=api@internal"
@@ -116,6 +116,6 @@ volumes:
   #   labels:
   #     - "traefik.enable=true"
   #     - "traefik.http.services.airbyte-proxy.loadbalancer.server.port=8000"
-  #     - "traefik.http.routers.airbyte-proxy.rule=Host(`airbyte.atest1.adingil.com`)"
+  #     - "traefik.http.routers.airbyte-proxy.rule=Host(`${AIRBYTE_DOMAIN}`)"
   #     - "traefik.http.routers.airbyte-proxy.entrypoints=websecure"
   #     - "traefik.http.routers.airbyte-proxy.tls.certresolver=myresolver"
