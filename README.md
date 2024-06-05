@@ -13,7 +13,12 @@ Python 3.9 needed!
 3. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
 4. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
 5. Setup langsmith in .env
-6. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up`
+6. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up -f `
+
+1. Build core image `docker build -t aishe-ai-core .` 
+2. Update the image env name optional if docker image name was changed above
+3. Choose if you want/able to run airbyte:
+4. Run docker compose stack `docker compose -f dev-docker-compose.yaml -p unified_aishe_ai up` 
 
 ### Conventional
 0. Copy .env.example to .env and modify content

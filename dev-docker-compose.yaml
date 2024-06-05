@@ -1,5 +1,5 @@
-include:
-- ../airbyte-pgvector/docker-compose.yaml
+# include:
+# - ../airbyte-pgvector/docker-compose.yaml
 
 services:
   database:
