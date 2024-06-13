@@ -2,6 +2,12 @@
 
 ## Setup/Deployment
 Python 3.9 needed!
+Also install following packages for the dev setup:
+``` bash
+sudo apt install postgresql postgresql-contrib
+sudo apt-get install python3.9-dev
+sudo apt-get install --reinstall libpq-dev
+```
 
 1. Install python 3.9 or set version to it
 2. Create new venv: `python3.9 -m venv .venv`
