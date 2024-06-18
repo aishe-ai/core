@@ -16,5 +16,5 @@ build:
     - docker push $ARTIFACT_REGISTRY/core:$CI_COMMIT_SHA
     - docker tag $ARTIFACT_REGISTRY/core:$CI_COMMIT_SHA $ARTIFACT_REGISTRY/core:latest  # Tagging as latest
     - docker push $ARTIFACT_REGISTRY/core:latest  # Pushing latest tag
-#  rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
