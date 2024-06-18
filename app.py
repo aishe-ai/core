@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
-
+from langfuse import Langfuse
 from slack_sdk import WebClient
 from slack_sdk.signature import SignatureVerifier
 from slack_sdk.errors import SlackApiError
@@ -80,19 +80,52 @@ async def get_example_prompts():
 
 @app.post("/slack/rating/")
 async def slack_rating(payload: str = Form(...)):
-    # Decode the URL-encoded payload to json
+    # Decode the URL-encoded payload to JSON
     decoded_payload = urllib.parse.unquote(payload)
     json_payload = json.loads(decoded_payload)
 
-    # # Extract relevant data (customize as needed)
+    # Extract relevant data
     user_id = json_payload["user"]["id"]
-    rating = json_payload["state"]["values"]["UBJT"]["radio_buttons-action"][
-        "selected_option"
-    ]["text"]["text"]
+    message_text = json_payload["message"]["text"]
+    time_stamp = json_payload["container"]["message_ts"]
+    json_payload["message"].pop("blocks", None)
+    metadata = json_payload["message"].copy()
+    rating = None
 
-    print(user_id, rating)
+    # Iterate over the state values to find the selected radio button option
+    for block_id, block_data in json_payload["state"]["values"].items():
+        for action_id, action_data in block_data.items():
+            if action_data["type"] == "radio_buttons":
+                rating = action_data["selected_option"]["text"]["text"]
+                break
+        if rating:
+            break
 
-    # logic here (e.g., save to a database, respond back to Slack, etc.)
+    if rating:
+        langfuse_client = Langfuse()
+        # Convert rating text to a numerical value (customize as needed)
+        rating_value = {"Good": 3, "Ok": 2, "Bad": 1}.get(rating, 0)
+
+        # Create a trace in Langfuse
+        trace = langfuse_client.trace(
+            name=f"slack-rating-{time_stamp}",
+            input={"message_text": message_text},
+            metadata=metadata,
+        )
+
+        # Send the score to Langfuse with the message text as a comment
+        trace.score(
+            name="quality",
+            value=rating_value,
+            comment=f"User {user_id} rated: {rating}. Message: {message_text}",
+            id=f"rating_{user_id}_{time_stamp}",  # Unique idempotency key
+        )
+
+        # Optionally, get the trace URL for logging or debugging
+        # trace_url = trace.get_trace_url()
+        # print(f"Trace URL: {trace_url}")
+    else:
+        print("No rating found")
 
     return payload
 
