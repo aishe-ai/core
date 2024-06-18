@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "core"
+version = "0.1.0"
+description = "Core Implementation for aishe.ai"
+authors = ["Alptug Dingil <alptug.dingil@inspired.consulting>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "0.111.0"
+uvicorn = "0.29.0"
+beautifulsoup4 = "4.12.3"
+langchain = "0.2.0"
+langchain-community = "0.2.0"
+atlassian-python-api = "3.41.11"
+pillow = "10.3.0"
+lxml = "5.2.2"
+pytesseract = "0.3.10"
+python-dotenv = "1.0.1"
+tiktoken = "0.7.0"
+pydantic = "2.7.1"
+slack-sdk = "3.27.2"
+openai = "1.30.1"
+python-multipart = "0.0.9"
+docx2txt = "0.8"
+python-docx = "1.1.2"
+pypdf = "4.2.0"
+google-api-python-client = "2.129.0"
+playwright = "1.44.0"
+html2text = "2024.2.26"
+GitPython = "3.1.43"
+fake-useragent = "1.5.1"
+black = "24.4.2"
+numexpr = "2.10.0"
+pgvector = "0.2.5"
+langchain-openai = "0.1.7"
+langchain-anthropic = "0.1.13"
+langfuse = "2.32.0"
+firecrawl-py = "0.0.8"
+sqlmodel = "0.0.18"
+psycopg2 = "2.9.9"
+psycopg2-binary = "2.9.9"
+alembic = "1.13.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
