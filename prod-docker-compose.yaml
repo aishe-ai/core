@@ -93,39 +93,3 @@ services:
 
 volumes:
   postgres_data:
-
-# after running the airbyte setup, 
-# extra envs in airbyte .env
-# BASIC_AUTH_STRING=""
-# AIRBYTE_DOMAIN=
-
-
-# proxy replacement
-  # airbyte-proxy:
-  #   image: airbyte/proxy:${VERSION}
-  #   container_name: airbyte-proxy
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8000:8000"
-  #     - "8001:8001"
-  #     - "8003:8003"
-  #     - "8006:8006"
-  #   environment:
-  #     # - BASIC_AUTH_USERNAME=${BASIC_AUTH_USERNAME}
-  #     # - BASIC_AUTH_PASSWORD=${BASIC_AUTH_PASSWORD}
-  #     - BASIC_AUTH_PROXY_TIMEOUT=${BASIC_AUTH_PROXY_TIMEOUT}
-  #   networks:
-  #     - airbyte_internal
-  #     - airbyte_public
-  #   depends_on:
-  #     - webapp
-  #     - server
-  #     - airbyte-api-server
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.services.airbyte-proxy.loadbalancer.server.port=8000"
-  #     - "traefik.http.routers.airbyte-proxy.rule=Host(`${AIRBYTE_DOMAIN}`)"
-  #     - "traefik.http.routers.airbyte-proxy.entrypoints=websecure"
-  #     - "traefik.http.routers.airbyte-proxy.tls.certresolver=myresolver"
-  #     - "traefik.http.routers.airbyte-proxy.middlewares=auth"
-  #     - "traefik.http.middlewares.auth.basicauth.users=${BASIC_AUTH_STRING}"

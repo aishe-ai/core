@@ -1,60 +1,132 @@
-# aishe core
+# aishe.ai Core
 
-## Setup/Deployment
-Python 3.9 needed!
-Also install following packages for the dev setup:
-``` bash
-sudo apt install postgresql postgresql-contrib
-sudo apt-get install python3.9-dev
-sudo apt-get install --reinstall libpq-dev
-```
+## Setup and Deployment
 
-1. Install python 3.9 or set version to it
-2. Create new venv: `python3.9 -m venv .venv`
-3. Activate venv: `source .venv/bin/activate`
+### Prerequisites
+- Install Python 3.9 or set the version to it.
+- Install necessary system packages:
+    ```bash
+    sudo apt install postgresql postgresql-contrib
+    sudo apt-get install python3.9-dev
+    sudo apt-get install --reinstall libpq-dev
+    ```
+    
+### Conventional Setup
 
-### Docker Compose
-0. Copy .env.example to .env and modify content
-2. Create ngrok domain
-3. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
-4. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
-5. Setup langsmith in .env
-6. Start everything as a docker-compose with code hot reload: `docker-compose --env-file .env -p aishe_ai up -f `
+0. Copy `.env.example` to `.env` and modify the content.
+1. Install `tesseract-ocr` for your system.
+2. Install Python dependencies, see [Poetry](#poetry) 
+3. Install Chromium and other dependencies:
+    ```bash
+    pip install -q playwright beautifulsoup4
+    playwright install
+    ```
+4. Create an ngrok domain.
+5. Install [ngrok](https://ngrok.com/download).
+6. Set up [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken).
+7. [Set up Google access](https://python.langchain.com/docs/integrations/tools/google_search) for LLM and add keys to `.env`.
+8. Set up Langsmith in `.env`.
+9. Set up [Langfuse](https://github.com/langfuse/langfuse?tab=readme-ov-file#get-started) and its needed envs.
+10. Set up [Firecrawl](https://www.firecrawl.dev/) and its needed envs.
+11. Start FastAPI:
+    ```bash
+    uvicorn app:app --reload
+    ```
+    or
+    ```bash
+    python3.9 -m uvicorn app:app --reload --port 8888
+    ```
+11. Start ngrok:
+    ```bash
+    ngrok http --domain=DOMAIN 8000
+    ```
+    (Domain must be the same as the bot creation)
 
-1. Build core image `docker build -t aishe-ai-core .` 
-2. Update the image env name optional if docker image name was changed above
-3. Choose if you want/able to run airbyte:
-4. Run docker compose stack `docker compose -f dev-docker-compose.yaml -p unified_aishe_ai up` 
 
-### Conventional
-0. Copy .env.example to .env and modify content
-1. Install `tesseract-ocr` for your system with apt etc
-2. Install python deps: `pip3 install -r requirements.txt` or update current `pip install -r requirements.txt --upgrade`
-3. Install chromium `pip install -q playwright beautifulsoup4 playwright install`
-4. Create ngrok domain
-5. Install [ngrok](https://ngrok.com/download)
-6. Setup [ngrok agent auth](https://dashboard.ngrok.com/get-started/your-authtoken)
-7. [Setup google access](https://python.langchain.com/docs/integrations/tools/google_search) to llm and add keys to .env
-8. Setup langsmith in .env
-8. Start fastapi: `uvicorn app:app --reload` or `python3.9 -m uvicorn app:app --reload --port 8888`
-9. Start ngrok: `ngrok http --domain=DOMAIN 8000`, domain must be the same as the bot creation
-10. Setup [langfuse](https://github.com/langfuse/langfuse?tab=readme-ov-file#get-started) and its needed envs
-10. Setup [firecrawl](https://www.firecrawl.dev/) and its needed envs
+### Poetry
 
-## Issues
-- Browser is not starting for webscraping, for example within the webpage_tool:
-    - add to the browser launch parameters: `args=["--disable-gpu"]` -> `browser = await p.chromium.launch(headless=True, args=["--disable-gpu"])`
-    - only observed with wsl2 systems
+Poetry is a tool for dependency management and packaging in Python. It helps to manage project dependencies, build and publish packages, and ensure reproducibility.
 
-## Formatting
-- `black FOLDER_NAME`
-
-## Testing
-tbd
+1. Install Poetry:
+    ```bash
+    curl -sSL https://install.python-poetry.org | python3 -
+    ```
+2. Install project dependencies:
+    ```bash
+    poetry install
+    ```
+3. Activate the virtual environment created by Poetry:
+    ```bash
+    poetry shell
+    ```
 
 ## Docker
-[Public image repo](europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest)
-`docker run -d -p 80:80 --env-file .env aishe-ai`
+
+### Docker Compose Setup
+
+0. Follow steps 0-8 from the [Conventional Setup](#conventional-setup) to set up the environment variables and required services.
+1. Build the core image:
+    ```bash
+    docker build -t aishe-ai-core .
+    ```
+2. Start the development environment with Docker Compose (with code hot reload):
+    ```bash
+    docker-compose --env-file .env -p aishe_ai up -f
+    ```
+3. Optionally, choose if you want/able to run Airbyte:
+4. Run the Docker Compose stack:
+    ```bash
+    docker compose -f dev-docker-compose.yaml -p unified_aishe_ai up
+    ```
+
+### Production Setup
+
+1. Follow steps 0-8 from the [Conventional Setup](#conventional-setup) to set up the environment variables and required services.
+2. Start the production environment with Docker Compose:
+    ```bash
+    docker-compose -f prod-docker-compose.yaml --env-file .env -p aishe_ai up
+    ```
+
+### Run Docker Image
+
+- [Public image repository](europe-west10-docker.pkg.dev/aisheai/docker-images/core:latest)
+- Run the Docker image:
+    ```bash
+    docker run -d -p 80:80 --env-file .env aishe-ai
+    ```
+
+## Troubleshooting
+
+### Browser Issues with Web Scraping
+- If the browser is not starting (e.g., within the `webpage_tool`):
+    - Add to the browser launch parameters:
+        ```python
+        args=["--disable-gpu"]
+        ```
+    - Example:
+        ```python
+        browser = await p.chromium.launch(headless=True, args=["--disable-gpu"])
+        ```
+    - This issue is commonly observed with WSL2 systems.
+
+## Formatting
+
+- Use `black` for code formatting:
+    ```bash
+    black .
+    ```
+
+## Testing
+
+### Running Specific Modules from Root
+1. Ensure each folder has a `__init__.py` file. If unsure, run:
+    ```bash
+    find . -type d \( -path './.venv' -o -path './__pycache__' -o -path './downloads' -o -path './sql' \) -prune -o -type d -exec sh -c 'for dir; do [ ! -f "$dir/__init__.py" ] && touch "$dir/__init__.py" && echo "Created: $dir/__init__.py"; done' sh {} +
+    ```
+2. Run the module:
+    ```bash
+    python -m llm.vectorstores.pgvector.non_rbac
+    ```
 
 ## Data structures
 ### Planned Query Flow for Internal Company Data Prompts
