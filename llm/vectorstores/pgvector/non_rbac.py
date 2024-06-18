@@ -10,7 +10,9 @@ from typing import (
 )
 
 import sqlalchemy
-from sqlmodel import create_engine, SQLModel, Session
+from sqlmodel import create_engine, Session
+from sqlalchemy import text
+
 
 from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores.pgvector import PGVector
@@ -36,9 +38,43 @@ class DistanceStrategy(str, enum.Enum):
 DEFAULT_DISTANCE_STRATEGY = DistanceStrategy.COSINE
 _LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
 
+NON_RBAC_TABLE_NAME = os.environ.get("NON_RBAC_TABLE_NAME", "document")
+
+
+def get_nearest_docs(
+    db: Session, reference_embedding: List[float], max_results: int = 10
+):
+    # Flatten the reference_embedding into a comma-separated string and cast it as a PostgreSQL vector type
+    reference_embeddings_str = ",".join(map(str, reference_embedding))
+    reference_array_str = f"ARRAY[{reference_embeddings_str}]::vector"
+
+    # Query to get the nearest documents based on cosine similarity
+    # 1 - (embeddings <=> reference_array_str) to calculate cosine similarity
+    query = text(
+        f"""
+        SELECT page_content, context_data, (1 - (embeddings <=> {reference_array_str})) AS similarity 
+        FROM {NON_RBAC_TABLE_NAME}
+        ORDER BY similarity ASC
+        LIMIT {max_results}
+        """
+    )
+    results = db.execute(query).fetchall()
+
+    docs = []
+    for row in results:
+        doc = Document(
+            page_content=str(row),
+            metadata={
+                "source": {"name": "postgres vector db", "table": NON_RBAC_TABLE_NAME}
+            },
+        )
+        print(doc)
+        docs.append(doc)
+
+    return docs
+
 
 class NonRBACVectorStore(PGVector):
-
     def __init__(
         self,
         connection_string: str = CONNECTION_STRING,
@@ -67,6 +103,8 @@ class NonRBACVectorStore(PGVector):
     def connect(self) -> sqlalchemy.engine.Connection:
         engine = create_engine(self.connection_string)
         conn = engine.connect()
+        self._bind = engine
+        self._dbapi_connection = conn
         return conn
 
     def similarity_search(
@@ -115,7 +153,7 @@ if __name__ == "__main__":
     print(CONNECTION_STRING)
     non_rbac_vector_store = NonRBACVectorStore()
 
-    prompt = "Which person was the oldest in the given context?"
+    prompt = "Return the oldest person"
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -134,6 +172,7 @@ if __name__ == "__main__":
         memory=memory,
         return_source_documents=True,
     )
+
     conversation_result = conversation_qa_chain({"question": prompt})
 
     print(conversation_result["answer"])
