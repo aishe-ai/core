@@ -11,7 +11,7 @@
     sudo apt-get install --reinstall libpq-dev
     ```
     
-### Conventional Setup
+### Conventional Setup1
 
 0. Copy `.env.example` to `.env` and modify the content.
 1. Install `tesseract-ocr` for your system.
