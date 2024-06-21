@@ -255,7 +255,47 @@ Poetry is a tool for dependency management and packaging in Python. It helps to 
     python -m llm.vectorstores.pgvector.non_rbac
     ```
 
-## Data structures
+# Wiki
+## Tech Stack
+
+### [Airbyte](https://github.com/aishe-ai/airbyte)
+**Data Integration**
+- **Example:** Airbyte is used to seamlessly integrate various data sources into aishe.ai. For instance, it can connect to a company’s Confluence space, Git repositories, and document storage to aggregate all relevant data.
+- **Usage in aishe.ai:** Airbyte facilitates the extraction, transformation, and loading (ETL) of data from disparate sources, ensuring that aishe.ai has access to up-to-date and comprehensive information for generating accurate responses and insights.
+
+### [Langfuse](https://github.com/langfuse/langfuse)
+**User Feedback and Interaction Management**
+- **Example:** Langfuse is used to collect and manage user feedback on AI-generated outputs. For example, after aishe.ai provides an answer or generates a document, users can rate the response and provide comments.
+- **Usage in aishe.ai:** Langfuse helps in gathering user feedback, which is crucial for continuous improvement of the AI models. It allows aishe.ai to adapt and refine its responses based on real user interactions and feedback.
+
+### [Langchain](https://github.com/langchain-ai/langchain)
+**Building Complex AI Workflows**
+- **Example:** Langchain is used to create complex workflows where multiple AI models and tools are orchestrated to solve specific tasks. For instance, generating a project report might involve data retrieval, natural language processing, and summarization steps.
+- **Usage in aishe.ai:** Langchain enables the creation of sophisticated pipelines that combine various AI capabilities, ensuring that aishe.ai can handle multi-step processes efficiently and effectively.
+
+### [FastAPI](https://github.com/tiangolo/fastapi)
+**Backend API Development**
+- **Example:** FastAPI is used to develop the backend APIs that power aishe.ai’s functionalities. For example, endpoints for querying project data, submitting feedback, or configuring settings are all built using FastAPI.
+- **Usage in aishe.ai:** FastAPI provides a robust and high-performance framework for building the backend services that support aishe.ai’s operations, ensuring fast and reliable API responses.
+
+### [PGVector](https://github.com/pgvector/pgvector)
+**Vector Database for Semantic Search**
+- **Example:** PGVector is used to store and search through vector representations of textual data. For instance, meeting notes and project descriptions are converted into vectors for efficient semantic search.
+- **Usage in aishe.ai:** PGVector allows aishe.ai to perform advanced searches and retrieve relevant information based on semantic similarity, enhancing the accuracy and relevance of the AI’s responses.
+
+### [Firecrawl](https://github.com/mendableai/firecrawl/)
+**Website Crawling and Data Extraction**
+- **Example:** Firecrawl is used to crawl and convert any website into LLM-ready markdown or structured data. For instance, aishe.ai can use Firecrawl to gather data from a company’s public web pages or internal sites without requiring a sitemap.
+- **Usage in aishe.ai:** Firecrawl enhances aishe.ai’s ability to gather comprehensive data from web sources. It provides powerful scraping, crawling, and data extraction capabilities, enabling aishe.ai to convert website content into clean, structured data that can be used for various AI applications, such as answering queries or generating reports. This integration ensures that aishe.ai can access and utilize a wide range of web-based information efficiently.
+
+### [Local LLMs](https://chat.lmsys.org/)
+**Privacy-Preserving Language Models**
+- **Example:** Local LLMs are deployed to ensure data privacy and control. For instance, sensitive company data is processed by locally hosted language models rather than sending it to cloud-based services.
+- **Usage in aishe.ai:** By using local LLMs, aishe.ai ensures compliance with GDPR and other privacy regulations, providing a secure environment for processing sensitive information without compromising on the AI’s capabilities.
+
+By leveraging these technologies, aishe.ai provides a robust, secure, and efficient AI solution tailored to the needs of small and medium enterprises in Europe.
+
+
 ### Planned Query Flow for Internal Company Data Prompts
 
 The following steps outline the process for handling prompts regarding internal company data, which is regularly scraped and updated in the database. This process is designed to retrieve relevant document vectors based on the user's access rights, determined by their memberships in various data sources.
