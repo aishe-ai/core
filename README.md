@@ -1,6 +1,6 @@
 # [aishe.ai](https://aishe.ai/) Core
 
-![](https://pad.finf.uni-hannover.de/uploads/ab69c336-093d-4ed0-ace5-4f579aaf0077.jpeg =300x300)
+![](https://pad.finf.uni-hannover.de/uploads/ab69c336-093d-4ed0-ace5-4f579aaf0077.jpeg)
 
 
 The goal of is to provide a solution for small and medium enterprises in Europe to use LLM-based AI in a manner compliant with GDPR and typical privacy concerns of companies.
