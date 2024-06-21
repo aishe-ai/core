@@ -1,6 +1,137 @@
-# aishe.ai Core
+# [aishe.ai](https://aishe.ai/) Core
+
+![](https://pad.finf.uni-hannover.de/uploads/ab69c336-093d-4ed0-ace5-4f579aaf0077.jpeg =300x300)
+
+
+The goal of is to provide a solution for small and medium enterprises in Europe to use LLM-based AI in a manner compliant with GDPR and typical privacy concerns of companies.
+
+aishe.ai allows teams to ask questions in natural language about the organization, projects, processes, and applications. 
+To achieve this, aishe.ai scrapes the company's information systems, such as Confluence, documents, and Git repositories. 
+It serves as a virtual team assistant, distinguishing itself from a personal assistant.
+
+[More Info](https://pad.finf.uni-hannover.de/aisheai)
+
+## Features
+
+- **“Build your secure ChatGPT with your own data”**
+- **Autonomous Tool Usage:**
+  - Google search
+  - Visit websites and scrape entire sitemaps
+  - Firecrawl
+- **Image Generation:**
+  - DALL-E
+  - Multi-modal capabilities, allowing it to answer questions about images
+- **File Translation:**
+  - Translate files like PDFs using DeepL
+- **GitHub Integration:**
+  - Access and regularly synchronize with internal knowledge sources
+  - GitHub repository: aishe-ai/airbyte (Airbyte Fork)
+- **Chat Integration:**
+  - Slack
+- **User Feedback:**
+  - Users can provide feedback and rate/comment on LLM outputs
+  - Integrated with Langfuse
+- **Environment Support:**
+  - Supports different environments as long as Docker Compose or Kubernetes is available
+
+### Planned Features
+
+#### Near Future (1-3 Months)
+
+- **Support for More Data Sources:** Expanding to include data sources not yet supported by Airbyte.
+- **Develop Custom Airbyte Sources:** Creating proprietary Airbyte sources to meet unique requirements.
+- **Self-Service Portal:** 
+  - **Configuration:** Allow users to configure their own settings.
+  - **Monitoring:** Provide tools for users to monitor their data and AI interactions.
+  - **Setup:** Simplify the setup process for new users.
+- **Project-Based Assistant:** Tailoring the assistant to work on a per-project basis rather than for the entire organization.
+  - **Overview Queries:** For example, answering questions like "What security vulnerabilities does this project have?"
+  - **Data Integration:** Combine data from various sources to derive actions or questions.
+- **Git Tool Integration:** Boris is interested in integrating his Git tool.
+
+#### Distant Future (6-12 Months)
+
+- **Email Drafting:** Automate the creation of email drafts.
+- **Meeting Transcript Integration:** Connect meeting transcript sources like Fireflies to Airbyte.
+- **Local LLMs:** Use local LLMs instead of cloud providers to enhance privacy and control.
+- **Further Chat Integrations:** Expand chat integrations to include platforms like Teams and Zoom.
+- **Additional Data Sources:** 
+  - **SharePoint:** Integrate with SharePoint.
+  - **RBAC-Compliant Vector Table:** Implement a vector table that respects the role-based access control (RBAC) of the source.
 
 ## Setup and Deployment
+
+### Slack Setup
+1. You have to create a new slack app, [URL](https://api.slack.com/apps)
+2. Modify the below manifest to your needs/config, following are required to change:
+    - `request_url`, `url`
+        - your instance url
+    
+
+
+```yaml
+{
+    "display_information": {
+        "name": "aishe.ai",
+        "description": "Assistant LLM",
+        "background_color": "#070708",
+        "long_description": "Chat Assistant"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "aisheAI",
+            "always_online": true
+        },
+        "slash_commands": [
+            {
+                "command": "/aishe-health-check",
+                "url": "https://$DOMAIN/healthcheck",
+                "description": "Check if the backend services are running",
+                "should_escape": false
+            },
+            {
+                "command": "/aishe-example-prompts",
+                "url": "https://$DOMAIN/example-prompts/",
+                "description": "Shows examples prompts",
+                "should_escape": false
+            }
+        ]
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "channels:history",
+                "channels:read",
+                "chat:write",
+                "commands",
+                "files:read",
+                "files:write",
+                "groups:history",
+                "groups:read",
+                "mpim:read",
+                "remote_files:write",
+                "users:read"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "request_url": "https://$DOMAIN/slack/event/",
+            "bot_events": [
+                "member_joined_channel",
+                "message.groups"
+            ]
+        },
+        "interactivity": {
+            "is_enabled": true,
+            "request_url": "https://$DOMAIN/slack/rating/"
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}
+```
 
 ### Prerequisites
 - Install Python 3.9 or set the version to it.
@@ -69,12 +200,8 @@ Poetry is a tool for dependency management and packaging in Python. It helps to 
     ```bash
     docker build -t aishe-ai-core .
     ```
-2. Start the development environment with Docker Compose (with code hot reload):
-    ```bash
-    docker-compose --env-file .env -p aishe_ai up -f
-    ```
-3. Optionally, choose if you want/able to run Airbyte:
-4. Run the Docker Compose stack:
+2. Optionally, choose if you want/able to run Airbyte:
+3. Run the Docker Compose stack:
     ```bash
     docker compose -f dev-docker-compose.yaml -p unified_aishe_ai up
     ```
