@@ -69,12 +69,8 @@ Poetry is a tool for dependency management and packaging in Python. It helps to 
     ```bash
     docker build -t aishe-ai-core .
     ```
-2. Start the development environment with Docker Compose (with code hot reload):
-    ```bash
-    docker-compose --env-file .env -p aishe_ai up -f
-    ```
-3. Optionally, choose if you want/able to run Airbyte:
-4. Run the Docker Compose stack:
+2. Optionally, choose if you want/able to run Airbyte:
+3. Run the Docker Compose stack:
     ```bash
     docker compose -f dev-docker-compose.yaml -p unified_aishe_ai up
     ```
