@@ -39,11 +39,13 @@ SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 SLACK_BOT_DISPLAY_NAME = os.getenv("SLACK_BOT_DISPLAY_NAME")
+ENVIRONMENT = os.getenv("ENVIRONMENT")
 
 langfuse_handler = CallbackHandler()
 
 
 app = FastAPI()
+is_dev_env = ENVIRONMENT == "Development"
 
 
 @app.post("/healthcheck")
@@ -105,25 +107,28 @@ async def slack_rating(payload: str = Form(...)):
         langfuse_client = Langfuse()
         # Convert rating text to a numerical value (customize as needed)
         rating_value = {"Good": 3, "Ok": 2, "Bad": 1}.get(rating, 0)
-
+        
         # Create a trace in Langfuse
-        trace = langfuse_client.trace(
-            name=f"slack-rating-{time_stamp}",
-            input={"message_text": message_text},
-            metadata=metadata,
-        )
+        # On dev, all rating is logged
+        # On prod, only the bad feedback + todo (only last 5 slack messages)
+        if is_dev_env or rating_value == 1: 
+            trace = langfuse_client.trace(
+                name=f"slack-rating-{time_stamp}",
+                input={"message_text": message_text},
+                metadata=metadata,
+            )
 
-        # Send the score to Langfuse with the message text as a comment
-        trace.score(
-            name="quality",
-            value=rating_value,
-            comment=f"User {user_id} rated: {rating}. Message: {message_text}",
-            id=f"rating_{user_id}_{time_stamp}",  # Unique idempotency key
-        )
-
-        # Optionally, get the trace URL for logging or debugging
-        # trace_url = trace.get_trace_url()
-        # print(f"Trace URL: {trace_url}")
+            # Send the score to Langfuse with the message text as a comment
+            trace.score(
+                name="quality",
+                value=rating_value,
+                comment=f"User {user_id} rated: {rating}. Message: {message_text}",
+                id=f"rating_{user_id}_{time_stamp}",  # Unique idempotency key
+            )
+            
+            # Optionally, get the trace URL for logging or debugging
+            # trace_url = trace.get_trace_url()
+            # print(f"Trace URL: {trace_url}")
     else:
         print("No rating found")
 
@@ -277,7 +282,7 @@ def download_handler(prompt_parameters, file_url, file_name):
         Human: {prompt_parameters.prompt}
         Assistant:
         """
-
+        
         conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
 
 
@@ -290,7 +295,9 @@ def prompt_handler(prompt_parameters: PromptParameters):
     Human: {prompt_parameters.prompt}
     Assistant:
     """
-    response = conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
+    # On dev, all slack message is logged
+    # On prod, no slck message is logged
+    response = conversional_agent.run(input=prompt, callbacks=[langfuse_handler] if is_dev_env else None)
     slack_response_handler(prompt_parameters, response)
 
 
