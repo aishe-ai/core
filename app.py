@@ -46,6 +46,7 @@ langfuse_handler = CallbackHandler()
 
 app = FastAPI()
 is_dev_env = ENVIRONMENT == "Development"
+slack_history_limit = 5
 
 
 @app.post("/healthcheck")
@@ -79,6 +80,16 @@ async def get_example_prompts():
 
     return {"blocks": blocks}
 
+def retrive_slack_messages(channel_id):
+    result = SLACK_CLIENT.conversations_history(channel=channel_id, limit=slack_history_limit)
+    messages = result["messages"]
+    formatted_messages = []
+    for message in messages:
+        text = message.get('text', '')
+        ts = message.get('ts', '')
+        user = 'Assistant' if 'bot_id' in message else 'Human' if 'client_msg_id' in message else 'unknown'
+        formatted_messages.append({'content': text, 'user': user, 'ts': ts})
+    return formatted_messages
 
 @app.post("/slack/rating/")
 async def slack_rating(payload: str = Form(...)):
@@ -93,7 +104,7 @@ async def slack_rating(payload: str = Form(...)):
     json_payload["message"].pop("blocks", None)
     metadata = json_payload["message"].copy()
     rating = None
-
+    
     # Iterate over the state values to find the selected radio button option
     for block_id, block_data in json_payload["state"]["values"].items():
         for action_id, action_data in block_data.items():
@@ -108,16 +119,19 @@ async def slack_rating(payload: str = Form(...)):
         # Convert rating text to a numerical value (customize as needed)
         rating_value = {"Good": 3, "Ok": 2, "Bad": 1}.get(rating, 0)
         
+        channel_id = json_payload["container"]["channel_id"]
+        latest_slack_messages = retrive_slack_messages(channel_id)
         # Create a trace in Langfuse
         # On dev, all rating is logged
-        # On prod, only the bad feedback + todo (only last 5 slack messages)
+        # On prod, only the bad feedback + last 5 slack messages
         if is_dev_env or rating_value == 1: 
+            if not is_dev_env:
+                metadata['chat_history']=latest_slack_messages
             trace = langfuse_client.trace(
                 name=f"slack-rating-{time_stamp}",
                 input={"message_text": message_text},
                 metadata=metadata,
             )
-
             # Send the score to Langfuse with the message text as a comment
             trace.score(
                 name="quality",
