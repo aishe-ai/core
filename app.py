@@ -394,18 +394,6 @@ def string_handler(prompt_parameters: PromptParameters, response):
                 "action_id": "radio_buttons-action",
             },
         },
-        {
-            "type": "input",
-            "element": {
-                "type": "plain_text_input",
-                "action_id": "plain_text_input-action",
-            },
-            "label": {
-                "type": "plain_text",
-                "text": "You can tell me more about your rating, if you want.",
-                "emoji": True,
-            },
-        },
     ]
     try:
         SLACK_CLIENT.chat_postMessage(
