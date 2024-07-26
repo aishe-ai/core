@@ -80,16 +80,6 @@ async def get_example_prompts():
 
     return {"blocks": blocks}
 
-def retrive_slack_messages(channel_id):
-    result = SLACK_CLIENT.conversations_history(channel=channel_id, limit=slack_history_limit)
-    messages = result["messages"]
-    formatted_messages = []
-    for message in messages:
-        text = message.get('text', '')
-        ts = message.get('ts', '')
-        user = 'Assistant' if 'bot_id' in message else 'Human' if 'client_msg_id' in message else 'unknown'
-        formatted_messages.append({'content': text, 'user': user, 'ts': ts})
-    return formatted_messages
 
 @app.post("/slack/rating/")
 async def slack_rating(payload: str = Form(...)):
@@ -119,13 +109,13 @@ async def slack_rating(payload: str = Form(...)):
         # Convert rating text to a numerical value (customize as needed)
         rating_value = {"Good": 3, "Ok": 2, "Bad": 1}.get(rating, 0)
         
-        channel_id = json_payload["container"]["channel_id"]
-        latest_slack_messages = retrive_slack_messages(channel_id)
         # Create a trace in Langfuse
         # On dev, all rating is logged
         # On prod, only the bad feedback + last 5 slack messages
         if is_dev_env or rating_value == 1: 
             if not is_dev_env:
+                channel_id = json_payload["container"]["channel_id"]
+                latest_slack_messages = retrive_slack_messages(channel_id)
                 metadata['chat_history']=latest_slack_messages
             trace = langfuse_client.trace(
                 name=f"slack-rating-{time_stamp}",
@@ -229,6 +219,18 @@ async def new_slack_event(
         print(error)
 
     return JSONResponse(content=payload)
+
+
+def retrive_slack_messages(channel_id):
+    result = SLACK_CLIENT.conversations_history(channel=channel_id, limit=slack_history_limit)
+    messages = result["messages"]
+    formatted_messages = []
+    for message in messages:
+        text = message.get('text', '')
+        ts = message.get('ts', '')
+        user = 'Assistant' if 'bot_id' in message else 'Human' if 'client_msg_id' in message else ''
+        formatted_messages.append({'content': text, 'user': user, 'ts': ts})
+    return formatted_messages
 
 
 def check_user(user_id):
