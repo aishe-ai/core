@@ -38,15 +38,15 @@ def image_operations_tool(prompt: str, url: str) -> str:
     """
     Use this tool for analysing/describing an images from/for a prompt. Dont use for image creation!
     """
-    image_url = ""
-    if not os.path.exists(url):
-        image_url = url
-    else:
-        image_url = "data:image/jpeg;base64," + image_to_base64(url)
-
     try:
+        image_url = ""
+        if not os.path.exists(url):
+            image_url = url
+        else:
+            image_url = "data:image/jpeg;base64," + image_to_base64(url)
+
         gpt_4_response = OPENAI_CLIENT.chat.completions.create(
-            model="gpt-4-vision-preview",
+            model="gpt-4o",
             messages=[
                 {
                     "role": "user",

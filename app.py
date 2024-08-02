@@ -317,7 +317,7 @@ def prompt_handler(prompt_parameters: PromptParameters):
     Assistant:
     """
     # On dev, all slack message is logged
-    # On prod, no slck message is logged
+    # On prod, no slack message is logged
     response = conversional_agent.run(
         input=prompt, callbacks=[langfuse_handler] if is_dev_env else None
     )
@@ -353,7 +353,6 @@ def history_handler(prompt_parameters):
 def slack_response_handler(prompt_parameters: PromptParameters, response):
     try:
         response = json.loads(response)
-        print(response)
         if "action_input" in response:
             string_handler(prompt_parameters, response["action_input"])
         else:
