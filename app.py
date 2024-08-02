@@ -39,13 +39,13 @@ SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 SLACK_BOT_DISPLAY_NAME = os.getenv("SLACK_BOT_DISPLAY_NAME")
-ENVIRONMENT = os.getenv("ENVIRONMENT")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "Development")
 
 langfuse_handler = CallbackHandler()
 
 
 app = FastAPI()
-is_dev_env = ENVIRONMENT == "Development"
+is_dev_env = ENVIRONMENT
 slack_history_limit = 5
 
 
@@ -94,29 +94,28 @@ async def slack_rating(payload: str = Form(...)):
     json_payload["message"].pop("blocks", None)
     metadata = json_payload["message"].copy()
     rating = None
-    
+
     # Iterate over the state values to find the selected radio button option
     for block_id, block_data in json_payload["state"]["values"].items():
         for action_id, action_data in block_data.items():
             if action_data["type"] == "radio_buttons":
-                rating = action_data["selected_option"]["text"]["text"]
+                rating = action_data["selected_option"]["text"]["text"].split(" ")[0]
                 break
         if rating:
             break
-
     if rating:
         langfuse_client = Langfuse()
         # Convert rating text to a numerical value (customize as needed)
         rating_value = {"Good": 3, "Ok": 2, "Bad": 1}.get(rating, 0)
-        
+
         # Create a trace in Langfuse
         # On dev, all rating is logged
         # On prod, only the bad feedback + last 5 slack messages
-        if is_dev_env or rating_value == 1: 
+        if is_dev_env or rating_value == 1:
             if not is_dev_env:
                 channel_id = json_payload["container"]["channel_id"]
                 latest_slack_messages = retrive_slack_messages(channel_id)
-                metadata['chat_history']=latest_slack_messages
+                metadata["chat_history"] = latest_slack_messages
             trace = langfuse_client.trace(
                 name=f"slack-rating-{time_stamp}",
                 input={"message_text": message_text},
@@ -129,7 +128,7 @@ async def slack_rating(payload: str = Form(...)):
                 comment=f"User {user_id} rated: {rating}. Message: {message_text}",
                 id=f"rating_{user_id}_{time_stamp}",  # Unique idempotency key
             )
-            
+
             # Optionally, get the trace URL for logging or debugging
             # trace_url = trace.get_trace_url()
             # print(f"Trace URL: {trace_url}")
@@ -222,14 +221,20 @@ async def new_slack_event(
 
 
 def retrive_slack_messages(channel_id):
-    result = SLACK_CLIENT.conversations_history(channel=channel_id, limit=slack_history_limit)
+    result = SLACK_CLIENT.conversations_history(
+        channel=channel_id, limit=slack_history_limit
+    )
     messages = result["messages"]
     formatted_messages = []
     for message in messages:
-        text = message.get('text', '')
-        ts = message.get('ts', '')
-        user = 'Assistant' if 'bot_id' in message else 'Human' if 'client_msg_id' in message else ''
-        formatted_messages.append({'content': text, 'user': user, 'ts': ts})
+        text = message.get("text", "")
+        ts = message.get("ts", "")
+        user = (
+            "Assistant"
+            if "bot_id" in message
+            else "Human" if "client_msg_id" in message else ""
+        )
+        formatted_messages.append({"content": text, "user": user, "ts": ts})
     return formatted_messages
 
 
@@ -298,7 +303,7 @@ def download_handler(prompt_parameters, file_url, file_name):
         Human: {prompt_parameters.prompt}
         Assistant:
         """
-        
+
         conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
 
 
@@ -313,7 +318,9 @@ def prompt_handler(prompt_parameters: PromptParameters):
     """
     # On dev, all slack message is logged
     # On prod, no slck message is logged
-    response = conversional_agent.run(input=prompt, callbacks=[langfuse_handler] if is_dev_env else None)
+    response = conversional_agent.run(
+        input=prompt, callbacks=[langfuse_handler] if is_dev_env else None
+    )
     slack_response_handler(prompt_parameters, response)
 
 
@@ -374,20 +381,32 @@ def string_handler(prompt_parameters: PromptParameters, response):
         },
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "Rate my answer"},
+            "text": {"type": "mrkdwn", "text": "*Rate my answer* :star:"},
             "accessory": {
                 "type": "radio_buttons",
                 "options": [
                     {
-                        "text": {"type": "plain_text", "text": "Good"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Good :thumbsup:",
+                            "emoji": True,
+                        },
                         "value": "value-0",
                     },
                     {
-                        "text": {"type": "plain_text", "text": "Ok"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Ok :neutral_face:",
+                            "emoji": True,
+                        },
                         "value": "value-1",
                     },
                     {
-                        "text": {"type": "plain_text", "text": "Bad"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Bad :thumbsdown:",
+                            "emoji": True,
+                        },
                         "value": "value-2",
                     },
                 ],
@@ -395,6 +414,7 @@ def string_handler(prompt_parameters: PromptParameters, response):
             },
         },
     ]
+
     try:
         SLACK_CLIENT.chat_postMessage(
             channel=prompt_parameters.source.id,
