@@ -24,7 +24,7 @@ from langchain.chains import ConversationalRetrievalChain
 from llm.vectorstores.pgvector.data_model import (
     get_nearest_docs,
 )
-from llm.config import GPT_3_5_CHAT_MODEL, CONNECTION_STRING
+from llm.config import GPT_4_CHAT_MODEL, CONNECTION_STRING
 
 
 class DistanceStrategy(str, enum.Enum):
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         return_messages=True,
     )
 
-    llm = GPT_3_5_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
 
     retriever = non_rbac_vector_store.as_retriever()
 

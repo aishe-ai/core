@@ -7,7 +7,7 @@ from langchain.tools import tool
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 
-from llm.config import GPT_3_5_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 from data_models.models import PgVectorToolParams
 from llm.vectorstores.pgvector.non_rbac import NonRBACVectorStore
 
@@ -22,7 +22,7 @@ def pgvector_tool(prompt: str) -> str:
     Use this tool for handling a prompt which asks needs retrieval augmented generation(rag). Current knowlegde within the db: - Titanic passenger/crew information You are not allowed to use this for google
     """
     try:
-        llm = GPT_3_5_CHAT_MODEL
+        llm = GPT_4_CHAT_MODEL
 
         memory = ConversationBufferMemory(
             memory_key="chat_history",

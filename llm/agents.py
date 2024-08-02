@@ -17,13 +17,13 @@ from llm.tools.deepl.file_translation_tool import file_translation_tool
 from llm.tools.image.image_generation_tool import image_generation_tool
 from llm.tools.image.image_operations_tool import image_operations_tool
 from llm.tools.database.rag import pgvector_tool
-from llm.config import GPT_3_5_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 
 EMPTY_MEMORY = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
 
 # prompt_parameters: PromptParameters
-def new_conversional_agent(chat_model=GPT_3_5_CHAT_MODEL, memory=EMPTY_MEMORY):
+def new_conversional_agent(chat_model=GPT_4_CHAT_MODEL, memory=EMPTY_MEMORY):
     tools = load_tools(
         # build in tools
         [

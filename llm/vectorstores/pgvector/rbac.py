@@ -19,7 +19,7 @@ from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
-from llm.config import GPT_3_5_CHAT_MODEL, CONNECTION_STRING
+from llm.config import GPT_4_CHAT_MODEL, CONNECTION_STRING
 
 from data_model import (
     get_memberships_by_email,
