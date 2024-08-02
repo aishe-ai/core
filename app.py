@@ -380,7 +380,7 @@ def string_handler(prompt_parameters: PromptParameters, response):
         },
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Rate my answer* :star:"},
+            "text": {"type": "mrkdwn", "text": "*Rate my answer*"},
             "accessory": {
                 "type": "radio_buttons",
                 "options": [
