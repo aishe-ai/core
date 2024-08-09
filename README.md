@@ -59,6 +59,42 @@ It serves as a virtual team assistant, distinguishing itself from a personal ass
   - **SharePoint:** Integrate with SharePoint.
   - **RBAC-Compliant Vector Table:** Implement a vector table that respects the role-based access control (RBAC) of the source.
 
+
+```mermaid
+flowchart TD
+    subgraph ChatInteraction [Chat, e.g. Slack]
+        User-->|Asks questions| LLM-Agent
+        LLM-Agent -->|Reponds| Response[Response]
+        Response -->|User Reacts Negatively| UserReaction[User Reaction]
+        UserReaction -->|Stores Reaction for Optimization| Langfuse[Langfuse]
+    end
+
+    subgraph LLMOrchestration [LLM Orchestration]
+        Langchain -->|Orchestrates| LLM-Agent[LLM Agent]
+        Langchain -->|Provides| LLMTools
+        LLM-Agent -->|Can use | LLMTools
+        LLM-Provider -->|Provides | LLM-Agent
+        subgraph LLMTools [LLM Tools]
+            PGVector
+            WebSearch[Web Search]
+            ImageGen[Image Generation]
+            DocTranslation[Document Translation]
+        end
+    end
+
+    subgraph DataIntegration [Data Integration]
+        DataSources[Data Sources, e.g. Sharepoint] -->|Ingested by| Airbyte[Airbyte]
+        Airbyte -->|Calls with Source Data | LLM-Provider[LLM Provider, e.g. openai]
+        LLM-Provider -->|Embeddings| Airbyte
+        Airbyte -->|Stores Embeddings and Source Data| PGVector[PGVector Database]
+    end
+
+    Platform -->|Auto-Setup/Usage| ChatInteraction
+    Platform -->|Configures/Status| DataIntegration
+    Platform -->|Configures| LLMOrchestration
+    Admin-User -->|Uses| Platform
+```
+
 ## Setup and Deployment
 
 ### Slack Setup
