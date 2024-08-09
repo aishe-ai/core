@@ -59,6 +59,7 @@ It serves as a virtual team assistant, distinguishing itself from a personal ass
   - **SharePoint:** Integrate with SharePoint.
   - **RBAC-Compliant Vector Table:** Implement a vector table that respects the role-based access control (RBAC) of the source.
 
+### Flowchart
 
 ```mermaid
 flowchart TD
