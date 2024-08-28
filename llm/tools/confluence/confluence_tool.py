@@ -20,7 +20,7 @@ CONFLUENCE_USERNAME = os.getenv("CONFLUENCE_USERNAME")
 CONFLUENCE_URL = os.getenv("CONFLUENCE_URL")
 
 
-@tool("confluence search", args_schema=ConfluenceToolParams, return_direct=True)
+@tool("confluence_search", args_schema=ConfluenceToolParams, return_direct=True)
 def confluence_tool(
     prompt: str, url: str, confluence_space_id: str, confluence_page_id: str
 ) -> str:

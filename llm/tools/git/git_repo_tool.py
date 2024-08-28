@@ -17,7 +17,7 @@ from data_models.constants import ALLOWED_FILE_EXTENSIONS
 from llm.config import HAIKU_CHAT_MODEL
 
 
-@tool("git search", return_direct=True, args_schema=GitToolParams)
+@tool("git_search", return_direct=True, args_schema=GitToolParams)
 def git_tool(prompt: str, url: str, project_name: str, branch_name: str) -> str:
     """
     Use this tool for handling a prompt regarding a repo, when given its url by the user

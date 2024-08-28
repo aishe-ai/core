@@ -33,7 +33,7 @@ def image_to_base64(image_path):
         return base64.b64encode(img_file.read()).decode("utf-8")
 
 
-@tool("image operations", return_direct=True, args_schema=ImageEditingTool)
+@tool("image_operations", return_direct=True, args_schema=ImageEditingTool)
 def image_operations_tool(prompt: str, url: str) -> str:
     """
     Use this tool for analysing/describing an images from/for a prompt. Dont use for image creation!

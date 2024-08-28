@@ -38,7 +38,7 @@ DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 DEEPL_API_URL = os.getenv("DEEPL_API_URL")
 
 
-@tool("document vector store", return_direct=True, args_schema=VectorStoreDocumentTool)
+@tool("document_vector_store", return_direct=True, args_schema=VectorStoreDocumentTool)
 def document_vector_store_tool(
     file_path: str, slack_channel_id: str, prompt: str
 ) -> str:

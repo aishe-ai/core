@@ -16,7 +16,7 @@ from sqlalchemy import text
 
 from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores.pgvector import PGVector
-from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain

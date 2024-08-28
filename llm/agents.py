@@ -1,8 +1,8 @@
 from datetime import datetime
 import pytz
 
+from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain.agents import (
-    load_tools,
     initialize_agent,
     AgentType,
 )

@@ -21,7 +21,7 @@ SLACK_BOT_ID = os.getenv("SLACK_BOT_ID")
 SLACK_CLIENT = WebClient(token=SLACK_BOT_OAUTH_TOKEN)
 
 
-@tool("image generation", return_direct=True, args_schema=ImageCreationTool)
+@tool("image_generation", return_direct=True, args_schema=ImageCreationTool)
 def image_generation_tool(
     prompt: str,
 ) -> str:

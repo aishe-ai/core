@@ -20,7 +20,7 @@ DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 DEEPL_API_URL = os.getenv("DEEPL_API_URL")
 
 
-@tool("file translation", return_direct=True, args_schema=DeeplDocumentTranslationTool)
+@tool("file_translation", return_direct=True, args_schema=DeeplDocumentTranslationTool)
 def file_translation_tool(
     file_path: str,
     target_language_abbrevation: str,

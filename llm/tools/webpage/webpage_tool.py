@@ -28,7 +28,7 @@ load_dotenv()
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
 
-@tool("webpage content search", return_direct=True, args_schema=WebpageToolParams)
+@tool("webpage_content_search", return_direct=True, args_schema=WebpageToolParams)
 def webpage_tool(prompt: str, url: str, ingestion_mode: str = "scrape") -> str:
     """
     Use this tool for handling a prompt regarding a webpage content.
