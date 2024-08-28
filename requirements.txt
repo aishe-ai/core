@@ -8,7 +8,6 @@ atlassian-python-api==3.41.11
 Pillow==10.3.0
 lxml==5.2.2
 pytesseract==0.3.10
-chromadb==0.5.5
 python-dotenv==1.0.1
 tiktoken==0.7.0
 pydantic==2.7.1
@@ -35,5 +34,4 @@ sqlmodel==0.0.21
 psycopg2==2.9.9
 psycopg2-binary==2.9.9
 alembic==1.13.1
-pysqlite3==0.5.3
-pysqlite3-binary
+langchain_postgres

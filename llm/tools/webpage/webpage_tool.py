@@ -19,7 +19,6 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 
 
 from data_models.models import WebpageToolParams
-from llm.vector_store import new_vector_store
 from llm.config import GPT_4_CHAT_MODEL
 
 
