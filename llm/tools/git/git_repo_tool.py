@@ -56,10 +56,10 @@ def git_tool(prompt: str, url: str, project_name: str, branch_name: str) -> str:
     memory.chat_memory.add_message(system_message)
 
     retriever = vector_store.as_retriever()
-    retriever.search_kwargs["distance_metric"] = "cos"
-    retriever.search_kwargs["fetch_k"] = 100
-    retriever.search_kwargs["maximal_marginal_relevance"] = True
-    retriever.search_kwargs["k"] = 10
+    # retriever.search_kwargs["distance_metric"] = "cos"
+    # retriever.search_kwargs["fetch_k"] = 100
+    # retriever.search_kwargs["maximal_marginal_relevance"] = True
+    # retriever.search_kwargs["k"] = 10
 
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,

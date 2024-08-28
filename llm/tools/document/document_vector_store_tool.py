@@ -24,9 +24,7 @@ from slack_sdk.errors import SlackApiError
 
 
 from data_models.models import *
-from llm.memory.slack_memory import slack_to_llm_memory
 from llm.config import GPT_4_CHAT_MODEL
-from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK
 
 load_dotenv()
 

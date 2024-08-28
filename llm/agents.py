@@ -9,7 +9,6 @@ from langchain.agents import (
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage
 
-from llm.tools.confluence.confluence_tool import confluence_tool
 from llm.tools.document.document_vector_store_tool import document_vector_store_tool
 from llm.tools.git.git_repo_tool import git_tool
 from llm.tools.webpage.webpage_tool import webpage_tool
@@ -33,7 +32,6 @@ def new_conversional_agent(chat_model=GPT_4_CHAT_MODEL, memory=EMPTY_MEMORY):
         ],
         llm=chat_model,
     ) + [
-        # confluence_tool,
         document_vector_store_tool,
         git_tool,
         webpage_tool,
