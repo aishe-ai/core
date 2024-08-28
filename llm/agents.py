@@ -62,7 +62,7 @@ def new_conversional_agent(chat_model=GPT_4_CHAT_MODEL, memory=EMPTY_MEMORY):
         agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         memory=memory,
-        # max_iterations=3,
+        max_iterations=3,
     )
 
     return conversional_agent
