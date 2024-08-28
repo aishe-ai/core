@@ -304,7 +304,14 @@ def download_handler(prompt_parameters, file_url, file_name):
         Assistant:
         """
 
-        conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
+        try:
+            conversional_agent.run(input=prompt, callbacks=[langfuse_handler])
+        except Exception as e:
+            logger.error(f"Agent error: {str(e)}")
+            slack_error_notification(prompt_parameters)
+    else:
+        logger.error(f"Couldnt obtain file for agent tools")
+        slack_error_notification(prompt_parameters)
 
 
 def prompt_handler(prompt_parameters: PromptParameters):
@@ -318,10 +325,14 @@ def prompt_handler(prompt_parameters: PromptParameters):
     """
     # On dev, all slack message is logged
     # On prod, no slack message is logged
-    response = conversional_agent.run(
-        input=prompt, callbacks=[langfuse_handler] if is_dev_env else None
-    )
-    slack_response_handler(prompt_parameters, response)
+    try:
+        response = conversional_agent.run(
+            input=prompt, callbacks=[langfuse_handler] if is_dev_env else None
+        )
+        slack_response_handler(prompt_parameters, response)
+    except Exception as e:
+        logger.error(f"Agent error: {str(e)}")
+        slack_error_notification(prompt_parameters)
 
 
 def history_handler(prompt_parameters):
@@ -351,21 +362,15 @@ def history_handler(prompt_parameters):
 
 
 def slack_response_handler(prompt_parameters: PromptParameters, response):
-    try:
-        response = json.loads(response)
-        if "action_input" in response:
-            string_handler(prompt_parameters, response["action_input"])
-        else:
-            SLACK_CLIENT.chat_postMessage(
-                channel=prompt_parameters.source.id,
-                text="response",
-                blocks=response["slack_response"],
-            )
-    except Exception as error:
-        if isinstance(response, str):
-            string_handler(prompt_parameters, response)
-        else:
-            print(f"Error while sending slack reponse: {response}, {str(error)}")
+    response = json.loads(response)
+    if "action_input" in response:
+        string_handler(prompt_parameters, response["action_input"])
+    else:
+        SLACK_CLIENT.chat_postMessage(
+            channel=prompt_parameters.source.id,
+            text="response",
+            blocks=response["slack_response"],
+        )
 
 
 def string_handler(prompt_parameters: PromptParameters, response):
@@ -418,6 +423,32 @@ def string_handler(prompt_parameters: PromptParameters, response):
         SLACK_CLIENT.chat_postMessage(
             channel=prompt_parameters.source.id,
             text=response,
+            blocks=link_blocks,
+        )
+    except SlackApiError as e:
+        # You will get a SlackApiError if "ok" is False
+        assert e.response["ok"] is False
+        assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+        print(f"Got an error: {e.response['error']}")
+
+
+def slack_error_notification(prompt_parameters: PromptParameters):
+    ERROR_MESSAGE = "An error occurred. Sry about that!"
+    link_blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "plain_text",
+                "text": ERROR_MESSAGE,
+                "emoji": True,
+            },
+        }
+    ]
+
+    try:
+        SLACK_CLIENT.chat_postMessage(
+            channel=prompt_parameters.source.id,
+            text=ERROR_MESSAGE,
             blocks=link_blocks,
         )
     except SlackApiError as e:

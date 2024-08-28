@@ -38,47 +38,41 @@ def image_operations_tool(prompt: str, url: str) -> str:
     """
     Use this tool for analysing/describing an images from/for a prompt. Dont use for image creation!
     """
-    try:
-        image_url = ""
-        if not os.path.exists(url):
-            image_url = url
-        else:
-            image_url = "data:image/jpeg;base64," + image_to_base64(url)
+    image_url = ""
+    blocks = []
+    if not os.path.exists(url):
+        image_url = url
+    else:
+        image_url = "data:image/jpeg;base64," + image_to_base64(url)
 
-        gpt_4_response = OPENAI_CLIENT.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": image_url,
-                            },
-                        },
-                    ],
-                }
-            ],
-        )
-        data = gpt_4_response.choices[0]
-        blocks = [
+    gpt_4_response = OPENAI_CLIENT.chat.completions.create(
+        model="gpt-4o",
+        messages=[
             {
-                "type": "section",
-                "block_id": "sectionBlockOnlyPlainText",
-                "text": {
-                    "type": "plain_text",
-                    "text": data.message.content,
-                    "emoji": True,
-                },
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": image_url,
+                        },
+                    },
+                ],
             }
-        ]
-    except SlackApiError as e:
-        print(f"Error: {e.response['error']}")
-        blocks = []  # Define blocks in case of error
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        blocks = []  # Define blocks in case of error
+        ],
+    )
+    data = gpt_4_response.choices[0]
+    blocks = [
+        {
+            "type": "section",
+            "block_id": "sectionBlockOnlyPlainText",
+            "text": {
+                "type": "plain_text",
+                "text": data.message.content,
+                "emoji": True,
+            },
+        }
+    ]
 
     return json.dumps({"slack_response": blocks})

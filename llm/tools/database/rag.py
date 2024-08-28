@@ -21,45 +21,42 @@ def pgvector_tool(prompt: str) -> str:
     """
     Use this tool for handling a prompt which asks needs retrieval augmented generation(rag). Current knowlegde within the db: - Titanic passenger/crew information You are not allowed to use this for google
     """
-    try:
-        llm = GPT_4_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
 
-        memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            input_key="question",
-            output_key="answer",
-            return_messages=True,
-        )
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        input_key="question",
+        output_key="answer",
+        return_messages=True,
+    )
 
-        system_message = f"""
-            You are an assistant which helps the user find answers to their question by searching a vector database.
-            This data will be provided by the vector db as context.
-            You also help with normal stuff like answering questions or generating text by ignoring this system message.
-        """
-        system_message = SystemMessage(content=system_message)
+    system_message = f"""
+        You are an assistant which helps the user find answers to their question by searching a vector database.
+        This data will be provided by the vector db as context.
+        You also help with normal stuff like answering questions or generating text by ignoring this system message.
+    """
+    system_message = SystemMessage(content=system_message)
 
-        memory.chat_memory.add_message(system_message)
-        
-        vector_store = NonRBACVectorStore()
-        retriever = vector_store.as_retriever()
-        conversation_qa_chain = ConversationalRetrievalChain.from_llm(
-            llm,
-            retriever=retriever,
-            memory=memory,
-            return_source_documents=True,
-        )
-        conversation_result = conversation_qa_chain({"question": prompt})
+    memory.chat_memory.add_message(system_message)
 
-        link_blocks = [
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": conversation_result["chat_history"][-1].content,
-                    "emoji": True,
-                },
-            }
-        ]
-        return json.dumps({"slack_response": link_blocks})
-    except Exception as error:
-        print(f"Error non rbac pgvector tool #{str(error)}")
+    vector_store = NonRBACVectorStore()
+    retriever = vector_store.as_retriever()
+    conversation_qa_chain = ConversationalRetrievalChain.from_llm(
+        llm,
+        retriever=retriever,
+        memory=memory,
+        return_source_documents=True,
+    )
+    conversation_result = conversation_qa_chain({"question": prompt})
+
+    link_blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "plain_text",
+                "text": conversation_result["chat_history"][-1].content,
+                "emoji": True,
+            },
+        }
+    ]
+    return json.dumps({"slack_response": link_blocks})

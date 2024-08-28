@@ -44,7 +44,6 @@ def document_vector_store_tool(
     Use this tool for answering document related prompts from user.
     """
     if not os.path.exists(file_path):
-        send_error_notification(f"No file found at {file_path}", slack_channel_id)
         raise FileNotFoundError(f"No file found at {file_path}")
 
     file_extension = file_path.suffix
@@ -134,30 +133,16 @@ def document_vector_store_tool(
             },
         },
     )
-    try:
-        SLACK_CLIENT.chat_postMessage(
-            channel=slack_channel_id,
-            # text=f"{simple_result['result']} || {conversation_result['chat_history'][-1].content}",
-            text=conversation_result["chat_history"][-1].content,
-            blocks=link_blocks,
-        )
-    except SlackApiError as e:
-        # You will get a SlackApiError if "ok" is False
-        assert e.response["ok"] is False
-        assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-        print(f"Got an error: {e.response['error']}")
-    # Clean up temporary file
-    os.remove(file_path)
+    SLACK_CLIENT.chat_postMessage(
+        channel=slack_channel_id,
+        # text=f"{simple_result['result']} || {conversation_result['chat_history'][-1].content}",
+        text=conversation_result["chat_history"][-1].content,
+        blocks=link_blocks,
+    )
 
     return json.dumps(
         {
             # 'ai_message': conversation_result,
             "slack_response": link_blocks
         }
-    )
-
-
-def send_error_notification(error_message, slack_channel_id):
-    SLACK_CLIENT.chat_postMessage(
-        channel=slack_channel_id, text=f"Error: {error_message}"
     )
