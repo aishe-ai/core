@@ -14,7 +14,7 @@ from langchain_community.document_loaders import GitLoader
 from data_models.models import GitToolParams
 from llm.vector_store import new_vector_store
 from data_models.constants import ALLOWED_FILE_EXTENSIONS
-from llm.config import HAIKU_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 
 
 @tool("git_search", return_direct=True, args_schema=GitToolParams)
@@ -37,7 +37,7 @@ def git_tool(prompt: str, url: str, project_name: str, branch_name: str) -> str:
 
     shutil.rmtree(folder_path)
 
-    llm = HAIKU_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",

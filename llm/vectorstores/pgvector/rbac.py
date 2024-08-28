@@ -130,7 +130,7 @@ if __name__ == "__main__":
         return_messages=True,
     )
 
-    llm = HAIKU_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
     # result = llm.invoke("hello")
     # print(result)
 

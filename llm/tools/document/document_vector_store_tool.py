@@ -25,7 +25,7 @@ from slack_sdk.errors import SlackApiError
 
 from data_models.models import *
 from llm.memory.slack_memory import slack_to_llm_memory
-from llm.config import HAIKU_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 from data_models.constants import LOADING_INDICATOR, LOADING_BLOCK
 
 load_dotenv()
@@ -73,7 +73,7 @@ def document_vector_store_tool(
     )
 
     # https://github.com/hwchase17/chat-your-data
-    llm = HAIKU_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
     conversation_qa_chain = ConversationalRetrievalChain.from_llm(
         llm,
         retriever=vector_store.as_retriever(),

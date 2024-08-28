@@ -20,7 +20,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 
 from data_models.models import WebpageToolParams
 from llm.vector_store import new_vector_store
-from llm.config import HAIKU_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 
 
 load_dotenv()
@@ -51,7 +51,7 @@ def webpage_tool(prompt: str, url: str, ingestion_mode: str = "scrape") -> str:
         {{context}}
     """
 
-    llm = HAIKU_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
 
     messages = ChatPromptTemplate.from_messages(
         [

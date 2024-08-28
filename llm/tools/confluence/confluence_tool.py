@@ -11,7 +11,7 @@ from langchain.schema import SystemMessage
 
 from data_models.models import ConfluenceToolParams
 from llm.vector_store import new_vector_store
-from llm.config import HAIKU_CHAT_MODEL
+from llm.config import GPT_4_CHAT_MODEL
 
 load_dotenv()
 
@@ -52,7 +52,7 @@ def confluence_tool(
     splitted_documents = splitter.split_documents(documents)
     vector_store = new_vector_store(splitted_documents)
 
-    llm = HAIKU_CHAT_MODEL
+    llm = GPT_4_CHAT_MODEL
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
