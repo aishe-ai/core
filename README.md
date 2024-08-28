@@ -177,13 +177,15 @@ flowchart TD
     sudo apt install postgresql postgresql-contrib
     sudo apt-get install python3.10-dev
     sudo apt-get install --reinstall libpq-dev
+    brew install sqlite
     ```
-    
+- Make sure that the `LD_LIBRARY_PATH` is set, use `sudo find / -name "libpq.so.5" 2>/dev/null` to find it
+
 ### Conventional Setup
 
 0. Copy `.env.example` to `.env` and modify the content.
 1. Install `tesseract-ocr` for your system.
-2. Install Python dependencies, see [Poetry](#poetry) 
+2. Install Python dependencies, see [Poetry](#poetry)
 3. Install Chromium and other dependencies:
     ```bash
     pip install -q playwright beautifulsoup4

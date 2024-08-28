@@ -101,11 +101,15 @@ class NonRBACVectorStore(PGVector):
         self._conn = self.connect()
 
     def connect(self) -> sqlalchemy.engine.Connection:
-        engine = create_engine(self.connection_string)
-        conn = engine.connect()
-        self._bind = engine
-        self._dbapi_connection = conn
-        return conn
+        try:
+            engine = create_engine(self.connection_string)
+            conn = engine.connect()
+            self._bind = engine
+            self._dbapi_connection = conn
+            return conn
+        except Exception as error:
+            print("Couldnt connect to db", error)
+            return None
 
     def similarity_search(
         self,

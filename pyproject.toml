@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Core Implementation for aishe.ai"
 authors = ["Alptug Dingil <alptug.dingil@inspired.consulting>"]
 
+# install also deps from requirements.txt
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "0.111.0"

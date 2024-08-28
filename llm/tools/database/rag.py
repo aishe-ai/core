@@ -39,9 +39,12 @@ def pgvector_tool(prompt: str) -> str:
         system_message = SystemMessage(content=system_message)
 
         memory.chat_memory.add_message(system_message)
+        
+        vector_store = NonRBACVectorStore()
+        retriever = vector_store.as_retriever()
         conversation_qa_chain = ConversationalRetrievalChain.from_llm(
             llm,
-            retriever=NonRBACVectorStore().as_retriever(),
+            retriever=retriever,
             memory=memory,
             return_source_documents=True,
         )
