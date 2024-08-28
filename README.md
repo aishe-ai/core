@@ -171,11 +171,11 @@ flowchart TD
 ```
 
 ### Prerequisites
-- Install Python 3.9 or set the version to it.
+- Install Python 3.10 or set the version to it.
 - Install necessary system packages:
     ```bash
     sudo apt install postgresql postgresql-contrib
-    sudo apt-get install python3.9-dev
+    sudo apt-get install python3.10-dev
     sudo apt-get install --reinstall libpq-dev
     ```
     
@@ -202,7 +202,7 @@ flowchart TD
     ```
     or
     ```bash
-    python3.9 -m uvicorn app:app --reload --port 8888
+    python3.10 -m uvicorn app:app --reload --port 8888
     ```
 11. Start ngrok:
     ```bash

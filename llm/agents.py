@@ -33,7 +33,7 @@ def new_conversional_agent(chat_model=GPT_4_CHAT_MODEL, memory=EMPTY_MEMORY):
         ],
         llm=chat_model,
     ) + [
-        confluence_tool,
+        # confluence_tool,
         document_vector_store_tool,
         git_tool,
         webpage_tool,

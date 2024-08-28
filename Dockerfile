@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.10
 
 # SQLite3 variables
 ARG SQLITE3_NAME=sqlite-autoconf-3430100

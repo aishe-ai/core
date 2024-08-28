@@ -5,7 +5,7 @@ description = "Core Implementation for aishe.ai"
 authors = ["Alptug Dingil <alptug.dingil@inspired.consulting>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 fastapi = "0.111.0"
 uvicorn = "0.29.0"
 beautifulsoup4 = "4.12.3"
