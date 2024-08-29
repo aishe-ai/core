@@ -32,7 +32,7 @@ services:
       - .:/app
 
   langfuse-server:
-    image: ghcr.io/langfuse/langfuse:latest
+    image: langfuse/langfuse:2.74.0
     depends_on:
       - database
       - core
